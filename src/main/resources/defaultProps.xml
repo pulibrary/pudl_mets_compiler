@@ -3,7 +3,7 @@
 <properties>
    <comment>Default values for properties</comment>
    <!-- location for output -->
-   <entry key="output.dir">/tmp/compiledMets</entry>
+   <entry key="output.dir">/tmp/compiledMETS</entry>
    <!-- locations of metadata records (can also be a single file) -->
    <entry key="images.root.dir">/home/jstroop/workspace/pudl-data-dev/images/pudl0001</entry>
    <entry key="mdata.root.dir">/home/jstroop/workspace/pudl-data-dev/mdata/pudl0001</entry>
