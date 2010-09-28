@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+   <comment>Default values for properties</comment>
+   <!-- location for output -->
+   <entry key="output.dir">/tmp/compiledMets</entry>
+   <!-- locations of metadata records (can also be a single file) -->
+   <entry key="images.root.dir">/home/jstroop/workspace/pudl-data-dev/images/pudl0001</entry>
+   <entry key="mdata.root.dir">/home/jstroop/workspace/pudl-data-dev/mdata/pudl0001</entry>
+   <entry key="texts.root.dir">/home/jstroop/workspace/pudl-data-dev/texts/pudl0001</entry>
+   <!-- locations of images -->
+   <entry key="images.mount.dir">/mnt/libserv37/dps</entry>
+   <!-- location for tmp database -->
+   <entry key="dbenv.dir">/tmp/metsCompilerDB</entry>
+</properties>
+

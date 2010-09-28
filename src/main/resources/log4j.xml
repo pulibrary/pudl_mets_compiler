@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+   <!--   <appender name="appender" class="org.apache.log4j.ConsoleAppender">-->
+   <!-- info from the application in general -->
+   <appender name="app.info" class="org.apache.log4j.ConsoleAppender">
+      <layout class="org.apache.log4j.PatternLayout">
+         <param name="ConversionPattern" value="%-9r [%-5p] : %m%n"/>
+      </layout>
+   </appender>
+   <!-- no record -->
+   <appender name="record.errors" class="org.apache.log4j.FileAppender">
+      <param name="File" value="recordErrors.log"/>
+      <param name="Append" value="false"/>
+      <layout class="org.apache.log4j.PatternLayout">
+         <param name="ConversionPattern" value="%-9r [%-5p] : %m%n"/>
+      </layout>
+   </appender>
+   
+   <category name="app.info" additivity="false">
+      <priority value="info"/>
+      <appender-ref ref="app.info"/>
+   </category>
+   
+   <category name="record.errors" additivity="false">
+      <priority value="error"/>
+      <appender-ref ref="record.errors"/>
+   </category>
+   
+   <root>
+      <priority value="info"/>
+      <appender-ref ref="app.info"/>
+   </root>
+</log4j:configuration>
