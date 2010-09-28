@@ -1,8 +1,8 @@
 /**
  * DBEnv.java <br/>
- * $LastChangedDate: 2010-09-16 17:33:50 -0400 (Thu, 16 Sep 2010) $ <br/>
- * $Author: jstroop $ <br/>
- * $Rev: 934 $
+ * $LastChangedDate$ <br/>
+ * $Author$ <br/>
+ * $Rev$
  */
 package edu.princeton.diglib.md.metsCompiler.db;
 

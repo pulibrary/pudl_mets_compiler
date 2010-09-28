@@ -1,8 +1,8 @@
 /**
  * PUDLMETSEntity.java <br/>
- * $LastChangedDate: 2010-09-15 17:05:17 -0400 (Wed, 15 Sep 2010) $ <br/>
- * $Author: jstroop $ <br/>
- * $Rev: 928 $
+ * $LastChangedDate$ <br/>
+ * $Author$ <br/>
+ * $Rev$
  */
 package edu.princeton.diglib.md.metsCompiler.db;
 

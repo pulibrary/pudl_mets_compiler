@@ -1,8 +1,8 @@
 /**
  * App.java <br/>
- * $LastChangedDate: 2010-09-28 11:13:43 -0400 (Tue, 28 Sep 2010) $ <br/>
- * $Author: jstroop $ <br/>
- * $Rev: 942 $
+ * $LastChangedDate$ <br/>
+ * $Author$ <br/>
+ * $Rev$
  */
 package edu.princeton.diglib.md.metsCompiler;
 
