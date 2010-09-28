@@ -33,6 +33,9 @@
 							</includes>
 							<followSymlinks>false</followSymlinks>
 						</fileset>
+						<fileset>
+                            <directory>tmp</directory>
+                        </fileset>
 					</filesets>
 				</configuration>
 			</plugin>
