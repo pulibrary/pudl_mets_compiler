@@ -1,0 +1,11 @@
+<collection xmlns="http://exist-db.org/collection-config/1.0">
+    <index xmlns:mets="http://www.loc.gov/METS/" xmlns:ead="urn:isbn:1-931666-22-9">
+        <fulltext default="none" attributes="no"/>
+        <create qname="@ID" type="xs:string"/>
+        <create qname="@TYPE" type="xs:string"/>
+        <create qname="@OBJID" type="xs:string"/>
+        <create qname="@CONTENTIDS" type="xs:string"/>
+        <create qname="mets:metsDocumentID" type="xs:string"/>
+        <create qname="ead:eadid" type="xs:string"/>
+    </index>
+</collection>

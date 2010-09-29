@@ -9,12 +9,14 @@ package edu.princeton.diglib.md.metsCompiler;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -48,7 +50,6 @@ public class METSCompiler {
     private static MetsReader metsReader;
     private static MetsWriter metsWriter;
     private static EntityAccessor accessor;
-    private static String outputDir;
     private static IDGen idgen;
 
     private static Map<String, String> idMap;
@@ -57,50 +58,55 @@ public class METSCompiler {
      * @throws DatatypeConfigurationException
      * @throws ParserConfigurationException
      */
-    public METSCompiler(EntityAccessor accessor, String outRoot)
+    public METSCompiler(EntityAccessor accessor, String outURL)
             throws ParserConfigurationException, DatatypeConfigurationException {
         metsReader = new MetsReader();
         metsWriter = new MetsWriter();
         METSCompiler.accessor = accessor;
-        outputDir = outRoot;
         idgen = new IDGen(4);
         idMap = new HashMap<String, String>(250);
 
     }
 
-    public void compile(String pathToSeed) throws MissingRecordException, SAXException,
-            IOException, ParseException {
+    public void compileToFile(String pathToSeed, java.io.File file) throws SAXException,
+            IOException, MissingRecordException, ParseException {
+
+        Mets srcMets = metsReader.read(new FileInputStream(pathToSeed));
+        Mets cmpMets = new Mets();
+
+        compile(srcMets, cmpMets);
+
+        try {
+            metsWriter.writeToFile(cmpMets, file);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public void compileToOutputStream(String pathToSeed, OutputStream out)
+            throws TransformerException, SAXException, IOException, MissingRecordException,
+            ParseException {
+
+        Mets srcMets = metsReader.read(new FileInputStream(pathToSeed));
+        Mets cmpMets = new Mets();
+
+        compile(srcMets, cmpMets);
+
+        metsWriter.writeToOutputStream(cmpMets, out);
+
+    }
+
+    private static void compile(Mets srcMets, Mets cmpMets) throws SAXException, IOException,
+            MissingRecordException, ParseException {
         idgen.reset();
         idMap.clear();
-
-        Mets srcMets = null;
-
-        srcMets = metsReader.read(new FileInputStream(pathToSeed));
-
-        Mets cmpMets = new Mets();
-        // Set up the fileSec
-        cmpMets.setFileSec(new FileSec());
-
+        cmpMets.setFileSec(new FileSec());// No fileSec by default
         doRoot(srcMets, cmpMets);
         doHeader(srcMets, cmpMets);
         doDmdSec(srcMets, cmpMets);
         doFileSecThumb(srcMets, cmpMets);
         doStructMaps(srcMets, cmpMets);
-
-        // test:
-        // java.io.File newFile;
-        // newFile = new java.io.File("tmp", srcMets.getOBJID() +
-        // ".c.mets");
-        // prod:
-        java.io.File newFile = new java.io.File(outputDir, srcMets.getOBJID() + ".c.mets");
-        newFile.getParentFile().mkdirs();
-        try {
-            metsWriter.writeToFile(cmpMets, newFile);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
     }
 
     private static void doRoot(Mets src, Mets cmp) {

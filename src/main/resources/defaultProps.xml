@@ -2,15 +2,16 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
    <comment>Default values for properties</comment>
-   <!-- location for output -->
-   <entry key="output.dir">/tmp/compiledMETS</entry>
+   <!-- location for output. Filesystem path or HTTP PUT w/ Basic Auth. -->
+   <entry key="App.output">http://localhost:8080/exist/rest/pudl/compiled</entry>
+   <!-- the following are used if output is to eXist -->
+   <entry key="App.httpUser">admin</entry>
+   <entry key="App.httpPW">admin</entry>
    <!-- locations of metadata records (can also be a single file) -->
-   <entry key="images.root.dir">/home/jstroop/workspace/pudl-data-dev/images/pudl0001</entry>
-   <entry key="mdata.root.dir">/home/jstroop/workspace/pudl-data-dev/mdata/pudl0001</entry>
-   <entry key="texts.root.dir">/home/jstroop/workspace/pudl-data-dev/texts/pudl0001</entry>
-   <!-- locations of images -->
-   <entry key="images.mount.dir">/mnt/libserv37/dps</entry>
+   <entry key="App.imageMetsDir">/home/jstroop/workspace/pudl-data-dev/images/pudlXXXX</entry>
+   <entry key="App.mdataDir">/home/jstroop/workspace/pudl-data-dev/mdata/pudlXXXX</entry>
+   <entry key="App.textsDir">/home/jstroop/workspace/pudl-data-dev/texts/pudlXXXX</entry>
    <!-- location for tmp database -->
-   <entry key="dbenv.dir">/tmp/metsCompilerDB</entry>
+   <entry key="App.dbenvDir">/tmp/metsCompilerDB</entry>
 </properties>
 

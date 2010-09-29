@@ -6,6 +6,8 @@
  */
 package edu.princeton.diglib.md.metsCompiler;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -16,11 +18,16 @@ import java.io.InputStream;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.InvalidPropertiesFormatException;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.transform.TransformerException;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -28,6 +35,10 @@ import org.xml.sax.SAXException;
 
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.persist.EntityCursor;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 
 import edu.princeton.diglib.md.metsCompiler.db.DBEnv;
 import edu.princeton.diglib.md.metsCompiler.db.EntityAccessor;
@@ -43,11 +54,6 @@ import edu.princeton.diglib.md.metsCompiler.db.PUDLMETSEntity.TYPE;
  * @since Sep 14, 2010
  */
 public class App {
-    private static Properties defaultProps;
-    private static Properties localProps;
-    private static final String DEFAULT_PROPS = "defaultProps.xml";
-    private static final String LOCAL_PROPS = "localProps.xml";
-
     private static Logger appLog;
     private static Logger recordLog;
 
@@ -56,7 +62,24 @@ public class App {
     private static DBEnv db;
     private static EntityAccessor accessor;
 
-    public static void main(String[] args) {
+    // HTTP client
+    private static Client client;
+    private static HTTPBasicAuthFilter auth;
+
+    // Properties
+    private static Properties defaultProps;
+    private static Properties localProps;
+    private static final String DEFAULT_PROPS = "defaultProps.xml";
+    private static final String LOCAL_PROPS = "localProps.xml";
+    private static String output;
+    private static String httpUser;
+    private static String httpPW;
+    private static String imageMetsDir;
+    private static String mdataDir;
+    private static String textsDir;
+    private static String dbenvDir;
+
+    public static void main(String[] args) throws TransformerException {
         App app = new App();
 
         // load
@@ -102,13 +125,12 @@ public class App {
 
         setupProperties();
 
-        // set up the db.
-        db = new DBEnv();
-        db.setup(localProps.getProperty("dbenv.dir"), false);
-        accessor = new EntityAccessor(db.getStore());
-
         initLoggers();
 
+        // set up the db.
+        db = new DBEnv();
+        db.setup(dbenvDir, false);
+        accessor = new EntityAccessor(db.getStore());
     }
 
     /**
@@ -147,7 +169,7 @@ public class App {
                 }
                 in.close();
                 out.close();
-                System.out.println("A file called " + LOCAL_PROPS + " has "
+                System.err.println("A file called " + LOCAL_PROPS + " has "
                         + "been created in this directory. Please update it " + "and run again.");
                 System.exit(0);
 
@@ -175,6 +197,13 @@ public class App {
         localProps = new Properties(defaultProps);
         try {
             localProps.loadFromXML(localIn);
+            output = localProps.getProperty("App.output");
+            httpUser = localProps.getProperty("App.httpUser");
+            httpPW = localProps.getProperty("App.httpPW");
+            imageMetsDir = localProps.getProperty("App.imageMetsDir");
+            mdataDir = localProps.getProperty("App.mdataDir");
+            textsDir = localProps.getProperty("App.textsDir");
+            dbenvDir = localProps.getProperty("App.dbenvDir");
             localIn.close();
         } catch (InvalidPropertiesFormatException e) {
             System.err.println(e.getMessage());
@@ -189,24 +218,24 @@ public class App {
     // Do we want to purge when finished? Boolean option?
     public void loadDB() throws XMLStreamException, MissingURIException,
             UnsupportedNamespaceException, MissingTypeException {
-        File mdata = new File(localProps.getProperty("mdata.root.dir"));
-        File images = new File(localProps.getProperty("images.root.dir"));
-        File texts = new File(localProps.getProperty("texts.root.dir"));
+        File mdata = new File(mdataDir);
+        File images = new File(imageMetsDir);
+        File texts = new File(textsDir);
 
-        FileFilter filter = new PUDLFileFilter();
+        FileFilter filter = new Filters.PUDLFileFilter();
 
         EntityBuilder builder = new EntityBuilder();
 
         for (File dir : new File[] { mdata, images, texts }) {
             try {
-                loadTree(dir, filter, builder);
+                loadTreeToBDB(dir, filter, builder);
             } catch (NullPointerException npe) {
                 appLog.warn(dir.getAbsolutePath() + " does not exist");
             }
         }
     }
 
-    private static void loadTree(File node, FileFilter filter, EntityBuilder builder)
+    private static void loadTreeToBDB(File node, FileFilter filter, EntityBuilder builder)
             throws XMLStreamException, MissingURIException, UnsupportedNamespaceException,
             MissingTypeException {
 
@@ -225,7 +254,7 @@ public class App {
             }
             // recursive case
             else if (n.isDirectory() && !n.isHidden() && n.getName() != "work") {
-                loadTree(n, filter, builder);
+                loadTreeToBDB(n, filter, builder);
             }
             // default case
             else {}
@@ -233,11 +262,10 @@ public class App {
     }
 
     public void doCompile() throws ParserConfigurationException, DatatypeConfigurationException,
-            SAXException, IOException, ParseException {
+            SAXException, IOException, ParseException, TransformerException {
         METSCompiler compiler = null;
 
-        String outPath = localProps.getProperty("output.dir");
-        compiler = new METSCompiler(accessor, outPath);
+        compiler = new METSCompiler(accessor, output);
 
         EntityCursor<PUDLMETSEntity> cursor;
         cursor = accessor.getTypeIndex().subIndex(TYPE.OBJECT).entities();
@@ -245,18 +273,73 @@ public class App {
         try {
             for (PUDLMETSEntity pme : cursor) {
                 try {
-                    compiler.compile(pme.getPath());
-                    appLog.info("Compiled " + pme.getUri());
+                    String pmePath = pme.getPath();
+                    
+                    // This is hack...necessary to keep fs structure
+                    int begin = pmePath.lastIndexOf("/pudl");
+                    String relPath = pmePath.substring(begin);
+                    
+                    if (output.startsWith("http://")) {
+                        ByteArrayOutputStream out = new ByteArrayOutputStream();
+                        compiler.compileToOutputStream(pmePath, out);
+                        ByteArrayInputStream in;
+                        in = new ByteArrayInputStream(out.toByteArray());
+                        out.close();
+                        loadToWebResource(in, relPath);
+                    } else {
+                        File outFile = new File(output, relPath);
+                        outFile.getParentFile().mkdirs();
+                        compiler.compileToFile(pme.getPath(), outFile);
+                        appLog.info("Compiled " + pme.getUri());
+                    }
+
                 } catch (MissingRecordException e) {
                     recordLog.error(e.getMessage());
                     System.err.println(e.getMessage());
                 }
-
             }
         } finally {
             cursor.close();
         }
+    }
 
+    private static void loadToWebResource(InputStream in, String relPath) {
+        if (client == null)
+            client = Client.create();
+        if (auth == null)
+            auth = new HTTPBasicAuthFilter(httpUser, httpPW);
+        
+        String putURI;
+        WebResource putResource; // web resource based on the putURI
+        ClientResponse response;
+        
+        putURI = output + relPath;
+        putResource = client.resource(putURI);
+        putResource.addFilter(auth);
+        
+        response = (ClientResponse) putResource.
+            type(MediaType.TEXT_XML).
+            put(ClientResponse.class, in);
+
+        try {
+            in.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        // explore response headers
+        // MultivaluedMap<String, String> headers = response.getHeaders();
+        // Set<String> keys = headers.keySet();
+        // for (String key : keys) {
+        // List<String> values = headers.get(key);
+        // for (String value : values) {
+        // System.out.println(key + " : " + value);
+        // }
+        // }
+
+        //appLog.info(response.getClientResponseStatus());
+        appLog.info(response.getStatus());
     }
 
 }

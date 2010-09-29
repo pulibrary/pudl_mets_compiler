@@ -4,7 +4,7 @@
 
 	<groupId>edu.princeton.diglib</groupId>
 	<artifactId>metsCompiler</artifactId>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<packaging>jar</packaging>
 
 	<name>metsCompiler</name>
@@ -13,9 +13,10 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<log4j-version>1.2.14</log4j-version>
-		<mets-api-version>0.0.6</mets-api-version>
+		<mets-api-version>0.0.7</mets-api-version>
 		<woodstox-version>4.0.8</woodstox-version>
 		<bdbje-version>4.0.103</bdbje-version>
+		<jersey-version>1.4-ea06</jersey-version>
 	</properties>
 	<build>
 		<finalName>mets-compiler</finalName>
@@ -34,8 +35,8 @@
 							<followSymlinks>false</followSymlinks>
 						</fileset>
 						<fileset>
-                            <directory>tmp</directory>
-                        </fileset>
+							<directory>tmp</directory>
+						</fileset>
 					</filesets>
 				</configuration>
 			</plugin>
@@ -88,6 +89,11 @@
 			<groupId>edu.princeton.diglib</groupId>
 			<artifactId>mets-api</artifactId>
 			<version>${mets-api-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.jersey</groupId>
+			<artifactId>jersey-client</artifactId>
+			<version>${jersey-version}</version>
 		</dependency>
 	</dependencies>
 	<repositories>
