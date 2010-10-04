@@ -18,12 +18,9 @@ import java.io.InputStream;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.InvalidPropertiesFormatException;
-import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamException;
@@ -265,7 +262,7 @@ public class App {
             SAXException, IOException, ParseException, TransformerException {
         METSCompiler compiler = null;
 
-        compiler = new METSCompiler(accessor, output);
+        compiler = new METSCompiler(accessor, output, true);
 
         EntityCursor<PUDLMETSEntity> cursor;
         cursor = accessor.getTypeIndex().subIndex(TYPE.OBJECT).entities();
@@ -274,18 +271,19 @@ public class App {
             for (PUDLMETSEntity pme : cursor) {
                 try {
                     String pmePath = pme.getPath();
-                    
+
                     // This is hack...necessary to keep fs structure
                     int begin = pmePath.lastIndexOf("/pudl");
                     String relPath = pmePath.substring(begin);
-                    
+
                     if (output.startsWith("http://")) {
                         ByteArrayOutputStream out = new ByteArrayOutputStream();
                         compiler.compileToOutputStream(pmePath, out);
                         ByteArrayInputStream in;
                         in = new ByteArrayInputStream(out.toByteArray());
                         out.close();
-                        loadToWebResource(in, relPath);
+                        String status = loadToWebResource(in, relPath);
+                        appLog.info(status + " - " + pme.getUri());
                     } else {
                         File outFile = new File(output, relPath);
                         outFile.getParentFile().mkdirs();
@@ -303,23 +301,22 @@ public class App {
         }
     }
 
-    private static void loadToWebResource(InputStream in, String relPath) {
+    private static String loadToWebResource(InputStream in, String relPath) {
         if (client == null)
             client = Client.create();
         if (auth == null)
             auth = new HTTPBasicAuthFilter(httpUser, httpPW);
-        
+
         String putURI;
         WebResource putResource; // web resource based on the putURI
         ClientResponse response;
-        
+
         putURI = output + relPath;
         putResource = client.resource(putURI);
         putResource.addFilter(auth);
-        
-        response = (ClientResponse) putResource.
-            type(MediaType.TEXT_XML).
-            put(ClientResponse.class, in);
+
+        response = (ClientResponse) putResource.type(MediaType.TEXT_XML).put(ClientResponse.class,
+                in);
 
         try {
             in.close();
@@ -327,7 +324,7 @@ public class App {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        
+
         // explore response headers
         // MultivaluedMap<String, String> headers = response.getHeaders();
         // Set<String> keys = headers.keySet();
@@ -338,8 +335,8 @@ public class App {
         // }
         // }
 
-        //appLog.info(response.getClientResponseStatus());
-        appLog.info(response.getStatus());
+        // appLog.info(response.getClientResponseStatus());
+        return response.getStatus() + ": " + response.getClientResponseStatus();
     }
 
 }

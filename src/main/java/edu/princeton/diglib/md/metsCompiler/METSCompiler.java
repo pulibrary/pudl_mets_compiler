@@ -13,6 +13,7 @@ import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.parsers.ParserConfigurationException;
@@ -51,18 +52,23 @@ public class METSCompiler {
     private static MetsWriter metsWriter;
     private static EntityAccessor accessor;
     private static IDGen idgen;
+    private static boolean opaquifyOBJID;
 
     private static Map<String, String> idMap;
 
     /**
+     * Setting the boolean argument to true will make the OBJIDs on the METS
+     * uuids.
+     * 
      * @throws DatatypeConfigurationException
      * @throws ParserConfigurationException
      */
-    public METSCompiler(EntityAccessor accessor, String outURL)
+    public METSCompiler(EntityAccessor accessor, String outURL, boolean opaquify)
             throws ParserConfigurationException, DatatypeConfigurationException {
         metsReader = new MetsReader();
         metsWriter = new MetsWriter();
         METSCompiler.accessor = accessor;
+        opaquifyOBJID = opaquify;
         idgen = new IDGen(4);
         idMap = new HashMap<String, String>(250);
 
@@ -111,7 +117,10 @@ public class METSCompiler {
 
     private static void doRoot(Mets src, Mets cmp) {
         // OBJID
-        cmp.setOBJID(src.getOBJID());
+        if (opaquifyOBJID)
+            cmp.setOBJID(UUID.randomUUID().toString());
+        else
+            cmp.setOBJID(src.getOBJID());
         // TYPE
         cmp.setType("CompiledDigitalObject");
     }
@@ -132,13 +141,14 @@ public class METSCompiler {
      * @param cmpMets
      * @throws IOException
      * @throws SAXException
+     * @throws MissingRecordException 
      */
 
     // this is OK as a test, but we're going to need to do as part of the
     // structMap, so that we can keep track of the ID
     // maybe we call this function for each DMDID we run accross? (with the ID
     // as an arg?)
-    private static void doDmdSec(Mets src, Mets cmp) throws SAXException, IOException {
+    private static void doDmdSec(Mets src, Mets cmp) throws SAXException, IOException, MissingRecordException {
 
         for (MdSec dmdSec : src.getDmdSec()) { // assumes there's an mdRef and
             // not an mdWrap
@@ -150,17 +160,25 @@ public class METSCompiler {
                 String mdataUri = dmdSec.getMdRef().getXlinkHREF();
                 MdSec.MDTYPE mdtype = dmdSec.getMdRef().getMDTYPE();
 
-                // db
-                String path = accessor.getUriIndex().get(mdataUri).getPath();
-                Document doc = metsReader.getDocBuilder().parse(path);
-                Element root = doc.getDocumentElement();
+                try {// db
+                    String path = accessor.getUriIndex().get(mdataUri).getPath();
+                    Document doc = metsReader.getDocBuilder().parse(path);
+                    Element root = doc.getDocumentElement();
 
-                MdSec cmpDmdSec = new MdSec(newId);
-                MdWrap wrap = new MdWrap(mdtype);
-                wrap.getXmlData().add(root);
-                cmpDmdSec.setMdWrap(wrap);
+                    MdSec cmpDmdSec = new MdSec(newId);
+                    MdWrap wrap = new MdWrap(mdtype);
+                    wrap.getXmlData().add(root);
+                    cmpDmdSec.setMdWrap(wrap);
 
-                cmp.getDmdSec().add(cmpDmdSec);
+                    cmp.getDmdSec().add(cmpDmdSec);
+                    
+                } catch (NullPointerException e) {
+                    MetsHdr srcHdr = src.getMetsHdr();
+                    String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
+                    String msg = "Could not retrieve " + mdataUri + " from the database. Skipping "
+                            + srcUri;
+                    throw new MissingRecordException(msg);
+                }
             }
         }
     }
