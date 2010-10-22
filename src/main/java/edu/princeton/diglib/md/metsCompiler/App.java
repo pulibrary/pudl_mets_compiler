@@ -113,6 +113,13 @@ public class App {
             recordLog.error(e.getMessage());
         } finally {
             app.getDb().close();
+            File dbDir = new File(dbenvDir);
+            for (File f : dbDir.listFiles())
+                f.delete();
+            if (dbDir.delete())
+                appLog.info("Successfully deleted temporary database environment");
+            else
+                appLog.warn("Could not delete temporary database environment");
         }
     }
 
@@ -250,7 +257,7 @@ public class App {
                 accessor.getUriIndex().put(pme);
             }
             // recursive case
-            else if (n.isDirectory() && !n.isHidden() && n.getName() != "work") {
+            else if (n.isDirectory() && !n.isHidden() && !n.getName().equals("work")) {
                 loadTreeToBDB(n, filter, builder);
             }
             // default case
@@ -275,8 +282,11 @@ public class App {
                     // This is hack...necessary to keep fs structure
                     int begin = pmePath.lastIndexOf("/pudl");
                     String relPath = pmePath.substring(begin);
-
+                    
+                    appLog.info("Compiling " + pme.getUri());
+                    
                     if (output.startsWith("http://")) {
+                        
                         ByteArrayOutputStream out = new ByteArrayOutputStream();
                         compiler.compileToOutputStream(pmePath, out);
                         ByteArrayInputStream in;

@@ -306,6 +306,7 @@ public class METSCompiler {
         }
     }
 
+// TODO: throw something if we there is no fileGrp
     private static void doFileSecThumb(Mets src, Mets cmp) {
         FileGrp grp = src.getFileSec().getFileGrp().get(0);
         for (File file : grp.getFile()) {

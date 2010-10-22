@@ -74,7 +74,6 @@ public class Filters {
                 return true;
             else
                 return false;
-
         }
     }
     
