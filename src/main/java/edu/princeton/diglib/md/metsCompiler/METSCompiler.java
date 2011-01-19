@@ -53,6 +53,8 @@ public class METSCompiler {
     private static EntityAccessor accessor;
     private static IDGen idgen;
     private static boolean opaquifyOBJID;
+    
+    private static final String ARK = "ark:/";
 
     private static Map<String, String> idMap;
 
@@ -117,7 +119,9 @@ public class METSCompiler {
 
     private static void doRoot(Mets src, Mets cmp) {
         // OBJID
-        if (opaquifyOBJID)
+        if (src.getOBJID().startsWith(ARK) && opaquifyOBJID)
+            cmp.setOBJID(src.getOBJID());
+        else if (!src.getOBJID().startsWith(ARK) && opaquifyOBJID)
             cmp.setOBJID(UUID.randomUUID().toString());
         else
             cmp.setOBJID(src.getOBJID());
@@ -141,14 +145,15 @@ public class METSCompiler {
      * @param cmpMets
      * @throws IOException
      * @throws SAXException
-     * @throws MissingRecordException 
+     * @throws MissingRecordException
      */
 
     // this is OK as a test, but we're going to need to do as part of the
     // structMap, so that we can keep track of the ID
     // maybe we call this function for each DMDID we run accross? (with the ID
     // as an arg?)
-    private static void doDmdSec(Mets src, Mets cmp) throws SAXException, IOException, MissingRecordException {
+    private static void doDmdSec(Mets src, Mets cmp) throws SAXException, IOException,
+            MissingRecordException {
 
         for (MdSec dmdSec : src.getDmdSec()) { // assumes there's an mdRef and
             // not an mdWrap
@@ -171,7 +176,7 @@ public class METSCompiler {
                     cmpDmdSec.setMdWrap(wrap);
 
                     cmp.getDmdSec().add(cmpDmdSec);
-                    
+
                 } catch (NullPointerException e) {
                     MetsHdr srcHdr = src.getMetsHdr();
                     String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
@@ -198,10 +203,8 @@ public class METSCompiler {
             StructMap cmpSmap = new StructMap();
             cmp.getStructMap().add(cmpSmap);
 
-            if (srcSmap.getLabel() != null)
-                cmpSmap.setLabel(srcSmap.getLabel());
-            if (srcSmap.getType() != null)
-                cmpSmap.setType(srcSmap.getType());
+            if (srcSmap.getLabel() != null) cmpSmap.setLabel(srcSmap.getLabel());
+            if (srcSmap.getType() != null) cmpSmap.setType(srcSmap.getType());
 
             doDiv(srcSmap.getDiv(), cmpSmap.getDiv(), src, cmp);
 
@@ -216,12 +219,9 @@ public class METSCompiler {
             String cmpId = idMap.get(srcId); // error handling?
             cmpDiv.getDMDID().add(cmpId);
         }
-        if (srcDiv.getLabel() != null)
-            cmpDiv.setLabel(srcDiv.getLabel());
-        if (srcDiv.getType() != null)
-            cmpDiv.setType(srcDiv.getType());
-        if (srcDiv.getORDER() != null)
-            cmpDiv.setORDER(srcDiv.getORDER());
+        if (srcDiv.getLabel() != null) cmpDiv.setLabel(srcDiv.getLabel());
+        if (srcDiv.getType() != null) cmpDiv.setType(srcDiv.getType());
+        if (srcDiv.getORDER() != null) cmpDiv.setORDER(srcDiv.getORDER());
         // mptr
         if (!srcDiv.getMptr().isEmpty()) {
             for (Mptr mptr : srcDiv.getMptr()) {
@@ -306,7 +306,7 @@ public class METSCompiler {
         }
     }
 
-// TODO: throw something if we there is no fileGrp
+    // TODO: throw something if we there is no fileGrp
     private static void doFileSecThumb(Mets src, Mets cmp) {
         FileGrp grp = src.getFileSec().getFileGrp().get(0);
         for (File file : grp.getFile()) {
