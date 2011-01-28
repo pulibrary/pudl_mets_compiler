@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
-   <comment>Default values for properties</comment>
+   <comment>Custom values for properties</comment>
    <!-- location for output. Filesystem path or HTTP PUT w/ Basic Auth. -->
    <entry key="App.output">http://localhost:8080/exist/rest/pudl/compiled</entry>
    <!-- the following are used if output is to eXist -->
    <entry key="App.httpUser">admin</entry>
    <entry key="App.httpPW">admin</entry>
-   <!-- locations of metadata records (can also be a single file) -->
+   <!-- locations of metadata records -->
    <entry key="App.imageMetsDir">/home/jstroop/workspace/pudl-data-dev/images/pudlXXXX</entry>
    <entry key="App.mdataDir">/home/jstroop/workspace/pudl-data-dev/mdata/pudlXXXX</entry>
    <entry key="App.textsDir">/home/jstroop/workspace/pudl-data-dev/texts/pudlXXXX</entry>

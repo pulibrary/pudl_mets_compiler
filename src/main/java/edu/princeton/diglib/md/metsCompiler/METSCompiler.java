@@ -53,14 +53,12 @@ public class METSCompiler {
     private static EntityAccessor accessor;
     private static IDGen idgen;
     private static boolean opaquifyOBJID;
-    
-    private static final String ARK = "ark:/";
 
     private static Map<String, String> idMap;
 
     /**
      * Setting the boolean argument to true will make the OBJIDs on the METS
-     * uuids.
+     * uuids if the currrent value is a path.
      * 
      * @throws DatatypeConfigurationException
      * @throws ParserConfigurationException
@@ -119,9 +117,10 @@ public class METSCompiler {
 
     private static void doRoot(Mets src, Mets cmp) {
         // OBJID
-        if (src.getOBJID().startsWith(ARK) && opaquifyOBJID)
+        if (!src.getOBJID().contains("/")) // slashes indicate temporary paths
+                                           // used during development
             cmp.setOBJID(src.getOBJID());
-        else if (!src.getOBJID().startsWith(ARK) && opaquifyOBJID)
+        else if (src.getOBJID().contains("/") && opaquifyOBJID)
             cmp.setOBJID(UUID.randomUUID().toString());
         else
             cmp.setOBJID(src.getOBJID());
