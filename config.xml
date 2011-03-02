@@ -2,7 +2,7 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
    <comment>Custom values for properties</comment>
-   <!--+ == The target for output ==
+   <!--+ The target for output.
        | Can be a Filesystem path or an HTTP PUT w/ Basic Auth., in which case 
        | the App.httpUser and App.httpPW properties that follow must be set.
        +-->
@@ -10,13 +10,14 @@
    <entry key="App.httpUser">admin</entry>
    <entry key="App.httpPW">admin</entry>
 
-   <!--+ == Location for tmp database ==
+   <!--+ Location for tmp database
        | This is an absolute path to the location where the compiler should keep
        | its temporary db. It will be deleted after the compilation is finished.
        +-->
    <entry key="App.dbenvDir">/tmp/metsCompilerDB</entry>
 
-   <!--+ == Locations of source metadata records ==
+
+   <!--+ Locations of source metadata records.
        |
        | This can be done in one of two ways:
        |
@@ -25,18 +26,20 @@
        |    just contain the root directories of our shredded objects.
        +-->
    <entry key="App.pudlNos">pudl0014, pudl0018</entry>
-   <entry key="App.imageMetsRoot">{USER_HOME}/pudl-data/images</entry>
-   <entry key="App.objectsRoot">{USER_HOME}/pudl-data/mdata</entry>
-   <entry key="App.textsRoot">{USER_HOME}/pudl-data/texts</entry>
+   <entry key="App.imageMetsRoot">/home/jstroop/pudl-data/images</entry>
+   <entry key="App.objectsRoot">/home/jstroop/pudl-data/mdata</entry>
+   <entry key="App.textsRoot">/home/jstroop/pudl-data/texts</entry>
+
+
    <!--+ 
        | 2. To load just one object, set the four properties below.
        |
        | If all of these are set, this method will be used instead of method #1
        +-->
    <!--   
-      <entry key="App.imageMetsDir">{USER_HOME}/pudl-data/images/pudl0001/4609321/s42</entry>
-      <entry key="App.singleObjectMETS">{USER_HOME}/pudl-data/mdata/pudl0001/4609321/s42.mets</entry>
-      <entry key="App.singleDMD">{USER_HOME}/pudl-data/mdata/pudl0001/4609321/s42.mods</entry>
-      <entry key="App.singleText">{USER_HOME}/workspace/pudl-data/texts/pudl0001/4609321/s42.tei</entry>
+      <entry key="App.imageMetsDir">/home/jstroop/pudl-data/images/pudl0001/4609321/s42</entry>
+      <entry key="App.singleObjectMETS">/home/jstroop/pudl-data/mdata/pudl0001/4609321/s42.mets</entry>
+      <entry key="App.singleDMD">/home/jstroop/pudl-data/mdata/pudl0001/4609321/s42.mods</entry>
+      <entry key="App.singleText">/home/jstroop/workspace/pudl-data/texts/pudl0001/4609321/s42.tei</entry>
    -->
 </properties>

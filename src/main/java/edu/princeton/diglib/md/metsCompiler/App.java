@@ -6,6 +6,8 @@
  */
 package edu.princeton.diglib.md.metsCompiler;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -13,8 +15,10 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.InvalidPropertiesFormatException;
@@ -69,7 +73,8 @@ public class App {
     private static Properties defaultProps;
     private static Properties localProps;
     private static final String DEFAULT_PROPS = "defaultProps.xml";
-    private static final String LOCAL_PROPS = "localProps.xml";
+    private static final String LOCAL_PROPS = "config.xml";
+    private static final String HOME_TMPL = "{USER_HOME}";
 
     private static String output;
     private static String httpUser;
@@ -85,6 +90,7 @@ public class App {
     private static String singleText;
 
     public static void main(String[] args) throws TransformerException {
+
         App app = new App();
 
         // load
@@ -165,22 +171,27 @@ public class App {
      */
     private static void setupProperties() {
         // setup default properties
-        InputStream localIn = null;
+        FileInputStream localIn = null;
         try {
             localIn = new FileInputStream(LOCAL_PROPS);
         } catch (FileNotFoundException e1) {
             try {
-                File f = new File(LOCAL_PROPS);
-                f.createNewFile();
                 InputStream in = cl.getResourceAsStream(DEFAULT_PROPS);
-                FileOutputStream out = new FileOutputStream(f);
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = in.read(buf)) > 0) {
-                    out.write(buf, 0, len);
+                BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                BufferedWriter bw = new BufferedWriter(new FileWriter(LOCAL_PROPS));
+
+                String home = System.getProperty("user.home");
+                String str;
+
+                while (null != ((str = br.readLine()))) {
+                    str = str.replace(HOME_TMPL, home);
+                    bw.write(str);
+                    bw.newLine();
                 }
-                in.close();
-                out.close();
+
+                br.close();
+                bw.close();
+                
                 System.err.println("A file called " + LOCAL_PROPS + " has "
                         + "been created in this directory. Please update it " + "and run again.");
                 System.exit(0);

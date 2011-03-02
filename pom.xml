@@ -29,7 +29,7 @@
 						<fileset>
 							<directory>.</directory>
 							<includes>
-								<include>localProps.xml</include>
+								<include>config.xml</include>
 								<include>*.log</include>
 							</includes>
 							<followSymlinks>false</followSymlinks>
