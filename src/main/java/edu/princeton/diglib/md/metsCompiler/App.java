@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.InvalidPropertiesFormatException;
+import java.util.LinkedList;
 import java.util.Properties;
 
 import javax.ws.rs.core.MediaType;
@@ -51,6 +52,7 @@ import edu.princeton.diglib.md.metsCompiler.db.PUDLMETSEntity.TYPE;
  * @since Sep 14, 2010
  */
 public class App {
+
     private static Logger appLog;
     private static Logger recordLog;
 
@@ -68,13 +70,19 @@ public class App {
     private static Properties localProps;
     private static final String DEFAULT_PROPS = "defaultProps.xml";
     private static final String LOCAL_PROPS = "localProps.xml";
+
     private static String output;
     private static String httpUser;
     private static String httpPW;
+    private static String[] pudlNos;
+    private static String imageMetsRoot;
+    private static String objectsRoot;
+    private static String textsRoot;
     private static String imageMetsDir;
-    private static String mdataDir;
-    private static String textsDir;
+    private static String singleObjectMETS;
+    private static String singleDMD;
     private static String dbenvDir;
+    private static String singleText;
 
     public static void main(String[] args) throws TransformerException {
         App app = new App();
@@ -201,13 +209,25 @@ public class App {
         localProps = new Properties(defaultProps);
         try {
             localProps.loadFromXML(localIn);
+
             output = localProps.getProperty("App.output");
             httpUser = localProps.getProperty("App.httpUser");
             httpPW = localProps.getProperty("App.httpPW");
-            imageMetsDir = localProps.getProperty("App.imageMetsDir");
-            mdataDir = localProps.getProperty("App.mdataDir");
-            textsDir = localProps.getProperty("App.textsDir");
+
             dbenvDir = localProps.getProperty("App.dbenvDir");
+
+            pudlNos = localProps.getProperty("App.pudlNos").split(",\\s?");
+            imageMetsRoot = localProps.getProperty("App.imageMetsRoot");
+            objectsRoot = localProps.getProperty("App.objectsRoot");
+            textsRoot = localProps.getProperty("App.textsRoot");
+
+            imageMetsDir = localProps.getProperty("App.imageMetsDir");
+            singleObjectMETS = localProps.getProperty("App.singleObjectMETS");
+            singleDMD = localProps.getProperty("App.singleDMD");
+            singleText = localProps.getProperty("App.singleText");
+
+            dbenvDir = localProps.getProperty("App.dbenvDir");
+
             localIn.close();
         } catch (InvalidPropertiesFormatException e) {
             System.err.println(e.getMessage());
@@ -219,36 +239,53 @@ public class App {
 
     }
 
-    // Do we want to purge when finished? Boolean option?
     public void loadDB() throws XMLStreamException, MissingURIException,
             UnsupportedNamespaceException, MissingTypeException {
-        File mdata = new File(mdataDir);
-        File images = new File(imageMetsDir);
-        File texts = new File(textsDir);
+
+        Mode mode = determineMode();
+        appLog.info("Loading in " + mode.toString() + " mode");
 
         FileFilter filter = new Filters.PUDLFileFilter();
 
         EntityBuilder builder = new EntityBuilder();
 
-        for (File dir : new File[] { mdata, images, texts }) {
+        LinkedList<File> toLoad = new LinkedList<File>();
+
+        if (mode.equals(Mode.MULTIPLE_OBJECTS)) {
+            // build a bunch of paths based on each of our given PUDL numbers
+            for (String pudlNo : pudlNos) {
+                toLoad.add(new File(imageMetsRoot, pudlNo));
+                toLoad.add(new File(objectsRoot, pudlNo));
+                toLoad.add(new File(textsRoot, pudlNo));
+            }
+        } else { // SINGLE
+            toLoad.add(new File(imageMetsDir));
+            toLoad.add(new File(singleObjectMETS));
+            toLoad.add(new File(singleDMD));
+            toLoad.add(new File(singleText));
+        }
+
+        for (File node : toLoad) {
             try {
-                loadTreeToBDB(dir, filter, builder);
+                loadToBDB(node, filter, builder);
             } catch (NullPointerException npe) {
-                appLog.warn(dir.getAbsolutePath() + " does not exist");
+                appLog.warn(node.getAbsolutePath() + " does not exist");
             }
         }
     }
 
-    private static void loadTreeToBDB(File node, FileFilter filter, EntityBuilder builder)
+    private static void loadToBDB(File node, FileFilter filter, EntityBuilder builder)
             throws XMLStreamException, MissingURIException, UnsupportedNamespaceException,
             MissingTypeException {
 
+        // catch files
         if (filter.accept(node)) {
             PUDLMETSEntity pme = builder.build(node);
             accessor.getUriIndex().put(pme);
             appLog.info("Loading " + pme.getUri());
             return;
         }
+        // dirs
         for (File n : node.listFiles()) {
             // base case
             if (filter.accept(n)) {
@@ -258,7 +295,7 @@ public class App {
             }
             // recursive case
             else if (n.isDirectory() && !n.isHidden() && !n.getName().equals("work")) {
-                loadTreeToBDB(n, filter, builder);
+                loadToBDB(n, filter, builder);
             }
             // default case
             else {}
@@ -282,11 +319,11 @@ public class App {
                     // This is hack...necessary to keep fs structure
                     int begin = pmePath.lastIndexOf("/pudl");
                     String relPath = pmePath.substring(begin);
-                    
+
                     appLog.info("Compiling " + pme.getUri());
-                    
+
                     if (output.startsWith("http://")) {
-                        
+
                         ByteArrayOutputStream out = new ByteArrayOutputStream();
                         compiler.compileToOutputStream(pmePath, out);
                         ByteArrayInputStream in;
@@ -312,10 +349,8 @@ public class App {
     }
 
     private static String loadToWebResource(InputStream in, String relPath) {
-        if (client == null)
-            client = Client.create();
-        if (auth == null)
-            auth = new HTTPBasicAuthFilter(httpUser, httpPW);
+        if (client == null) client = Client.create();
+        if (auth == null) auth = new HTTPBasicAuthFilter(httpUser, httpPW);
 
         String putURI;
         WebResource putResource; // web resource based on the putURI
@@ -335,18 +370,44 @@ public class App {
             e.printStackTrace();
         }
 
-        // explore response headers
-        // MultivaluedMap<String, String> headers = response.getHeaders();
-        // Set<String> keys = headers.keySet();
-        // for (String key : keys) {
-        // List<String> values = headers.get(key);
-        // for (String value : values) {
-        // System.out.println(key + " : " + value);
-        // }
-        // }
-
         // appLog.info(response.getClientResponseStatus());
         return response.getStatus() + ": " + response.getClientResponseStatus();
     }
 
+    private static Mode determineMode() {
+        Mode mode;
+        if (imageMetsDir != null && singleObjectMETS != null && singleDMD != null
+                && singleText != null)
+            mode = Mode.SINGLE_OBJECT;
+        else
+            mode = Mode.MULTIPLE_OBJECTS;
+
+        return mode;
+    }
+
+    /**
+     * @author <a href="mailto:jstroop@princeton.edu">Jon Stroop</a>
+     * @since Mar 1, 2011
+     * 
+     */
+    public enum Mode {
+        SINGLE_OBJECT("single object"), MULTIPLE_OBJECTS("multiple objects");
+
+        private String readable;
+
+        private Mode(String readable) {
+            this.readable = readable;
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see java.lang.Enum#toString()
+         */
+        @Override
+        public String toString() {
+            return this.readable;
+        };
+
+    }
 }

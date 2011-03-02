@@ -2,16 +2,47 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
    <comment>Custom values for properties</comment>
-   <!-- location for output. Filesystem path or HTTP PUT w/ Basic Auth. -->
+   <!--+ The target for output.
+       | Can be a Filesystem path or an HTTP PUT w/ Basic Auth., in which case 
+       | the App.httpUser and App.httpPW properties that follow must be set.
+       +-->
    <entry key="App.output">http://localhost:8080/exist/rest/pudl/compiled</entry>
-   <!-- the following are used if output is to eXist -->
    <entry key="App.httpUser">admin</entry>
    <entry key="App.httpPW">admin</entry>
-   <!-- locations of metadata records -->
-   <entry key="App.imageMetsDir">/home/jstroop/workspace/pudl-data-dev/images/pudlXXXX</entry>
-   <entry key="App.mdataDir">/home/jstroop/workspace/pudl-data-dev/mdata/pudlXXXX</entry>
-   <entry key="App.textsDir">/home/jstroop/workspace/pudl-data-dev/texts/pudlXXXX</entry>
-   <!-- location for tmp database -->
-   <entry key="App.dbenvDir">/tmp/metsCompilerDB</entry>
-</properties>
 
+   <!--+ Location for tmp database
+       | This is an absolute path to the location where the compiler should keep
+       | its temporary db. It will be deleted after the compilation is finished.
+       +-->
+   <entry key="App.dbenvDir">/tmp/metsCompilerDB</entry>
+
+
+   <!--+ Locations of source metadata records.
+       |
+       | This can be done in one of two ways:
+       |
+       | 1. To load one or more projects, set the four properties below. The 
+       |    list of PUDL numbers must be comma-separated, the other properties
+       |    just contain the root directories of our shredded objects.
+       +-->
+   <entry key="App.pudlNos">pudl0014, pudl0018</entry>
+   <entry key="App.imageMetsRoot">/home/jstroop/mdata-workspace/pudl-data/images</entry>
+   <entry key="App.objectsRoot">/home/jstroop/mdata-workspace/pudl-data/mdata</entry>
+   <entry key="App.textsRoot">/home/jstroop/mdata-workspace/pudl-data/texts</entry>
+
+
+   <!--+ 
+       | 2. To load just one object, set the four properties below.
+       |
+       | If all of these are set, this method will be used instead of method #1
+       +-->
+   <!--   
+   <entry key="App.imageMetsDir">/home/jstroop/mdata-workspace/pudl-data/images/pudl0001/4609321/s42</entry>
+   <entry key="App.singleObjectMETS">/home/jstroop/mdata-workspace/pudl-data/mdata/pudl0001/4609321/s42.mets</entry>
+   <entry key="App.singleDMD">/home/jstroop/mdata-workspace/pudl-data/mdata/pudl0001/4609321/s42.mods</entry>
+   <entry key="App.singleText">/home/jstroop/workspace/pudl-data-dev/texts/pudl0001/4609321/s42.tei</entry>
+   -->
+
+
+
+</properties>
