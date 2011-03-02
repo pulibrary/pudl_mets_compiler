@@ -189,7 +189,7 @@ public class METSCompiler {
 
     private static void doStructMaps(Mets src, Mets cmp) throws MissingRecordException,
             FileNotFoundException, SAXException, ParseException, IOException {
-        // get rid of the default structMap
+        // get rid of the default structMap; just easier
         cmp.getStructMap().clear();
 
         // Set up the fileGrp for the devliverable images
