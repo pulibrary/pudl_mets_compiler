@@ -4,7 +4,7 @@
 
 	<groupId>edu.princeton.diglib</groupId>
 	<artifactId>metsCompiler</artifactId>
-	<version>0.0.3</version>
+	<version>0.0.7</version>
 	<packaging>jar</packaging>
 
 	<name>metsCompiler</name>
@@ -119,6 +119,5 @@
 				<enabled>true</enabled>
 			</releases>
 		</repository>
-
 	</repositories>
 </project>
