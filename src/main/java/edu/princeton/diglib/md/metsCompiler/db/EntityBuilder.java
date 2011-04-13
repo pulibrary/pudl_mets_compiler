@@ -39,15 +39,13 @@ public class EntityBuilder {
     private static XMLInputFactory2 xmlif;
     private static XMLStreamReader2 xmlr;
 
-    // public static void main(String[] args) throws XMLStreamException,
-    // MissingURIException, UnsupportedNamespaceException, MissingTypeException
-    // {
-    // File f = new
-    // File("/home/jstroop/workspace/pudl-data-dev/mdata/pudl0032/ns1113.mods");
-    // EntityBuilder eb = new EntityBuilder();
-    // PUDLMETSEntity pme = eb.build(f);
-    // System.out.println(pme.getUri());
-    // }
+//    public static void main(String[] args) throws XMLStreamException, MissingURIException,
+//            UnsupportedNamespaceException, MissingTypeException {
+//        File f = new File("/home/jstroop/workspace/pudl0032-mdata/308y.mods");
+//        EntityBuilder eb = new EntityBuilder();
+//        PUDLMETSEntity pme = eb.build(f);
+//        System.out.println(pme.getUri());
+//    }
 
     public EntityBuilder() {
         Boolean f = Boolean.FALSE;
