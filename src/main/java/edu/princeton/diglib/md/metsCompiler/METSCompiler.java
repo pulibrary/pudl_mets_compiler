@@ -61,6 +61,8 @@ public class METSCompiler {
     private static Map<String, String> idMap;
     private static Map<String, String> admidMap;
 
+    private static String imagesHome;
+
     /**
      * Setting the boolean argument to true will make the OBJIDs on the METS
      * uuids if the currrent value is a path.
@@ -77,6 +79,7 @@ public class METSCompiler {
         idgen = new IDGen(4);
         idMap = new HashMap<String, String>(250);
         admidMap = new HashMap<String, String>(250);
+        imagesHome = App.getLocalProps().getProperty("METSCompiler.imagesHome");
 
     }
 
@@ -113,6 +116,7 @@ public class METSCompiler {
             MissingRecordException, ParseException {
         idgen.reset();
         idMap.clear();
+        admidMap.clear();
         cmpMets.setFileSec(new FileSec());// No fileSec by default
         doRoot(srcMets, cmpMets);
         doHeader(srcMets, cmpMets);
@@ -204,6 +208,7 @@ public class METSCompiler {
      */
     private static void doAmdSec(Mets src, Mets cmp) throws MissingRecordException {
         List<Div> aggregatesDivs = null;
+        // TODO: should be do / while loops
         for (StructMap smap : src.getStructMap()) {
             if (smap.getType().equals("RelatedObjects")) {
                 Div rootDiv = smap.getDiv();
@@ -442,7 +447,7 @@ public class METSCompiler {
     private static String delivUriPath(String uri) {
 
         String oldBase = "http://diglib.princeton.edu/images/deliverable/";
-        String newBase = "/mnt/libserv37/dps/";
+        String newBase = imagesHome.endsWith("/") ? imagesHome : imagesHome + "/";
         return uri.replace(oldBase, newBase);
     }
 

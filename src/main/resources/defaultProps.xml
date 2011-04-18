@@ -43,6 +43,6 @@
    <!--+ == Images mount point ==
       | Path on the filesystem to the root of the images
       +-->
-   <entry key="METSCompiler.imagesMount">/mnt/libserv37/dps</entry>
+   <entry key="METSCompiler.imagesHome">/mnt/libserv37/dps</entry>
    
 </properties>

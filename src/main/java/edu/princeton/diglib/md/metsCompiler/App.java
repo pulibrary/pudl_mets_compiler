@@ -165,8 +165,8 @@ public class App {
     }
 
     /*
-     * Initialize the properties objects. Any exceptions here cause the JpxDataExtract to
-     * exit.
+     * Initialize the properties objects. Any exceptions here cause the
+     * JpxDataExtract to exit.
      */
     private static void setupProperties() {
         // setup default properties
@@ -190,7 +190,7 @@ public class App {
 
                 br.close();
                 bw.close();
-                
+
                 System.err.println("A file called " + LOCAL_PROPS + " has "
                         + "been created in this directory. Please update it " + "and run again.");
                 System.exit(0);
@@ -382,6 +382,13 @@ public class App {
 
         // appLog.info(response.getClientResponseStatus());
         return response.getStatus() + ": " + response.getClientResponseStatus();
+    }
+
+    /**
+     * @return the localProps
+     */
+    public static Properties getLocalProps() {
+        return localProps;
     }
 
     private static Mode determineMode() {
