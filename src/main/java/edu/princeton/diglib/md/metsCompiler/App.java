@@ -264,7 +264,7 @@ public class App {
         if (mode.equals(Mode.MULTIPLE_OBJECTS)) {
             // build a bunch of paths based on each of our given PUDL numbers
             for (String pudlNo : pudlNos) {
-                pudlNo = pudlNo.trim();
+                pudlNo = pudlNo.trim();     
                 toLoad.add(new File(imageMetsRoot, pudlNo));
                 toLoad.add(new File(objectsRoot, pudlNo));
                 toLoad.add(new File(textsRoot, pudlNo));
