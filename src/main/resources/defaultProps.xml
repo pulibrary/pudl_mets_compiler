@@ -39,4 +39,10 @@
       <entry key="App.singleDMD">{USER_HOME}/pudl-data/mdata/pudl0001/4609321/s42.mods</entry>
       <entry key="App.singleText">{USER_HOME}/workspace/pudl-data/texts/pudl0001/4609321/s42.tei</entry>
    -->
+   
+   <!--+ == Images mount point ==
+      | Path on the filesystem to the root of the images
+      +-->
+   <entry key="METSCompiler.imagesMount">/mnt/libserv37/dps</entry>
+   
 </properties>

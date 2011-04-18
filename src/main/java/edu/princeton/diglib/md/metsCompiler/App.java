@@ -165,7 +165,7 @@ public class App {
     }
 
     /*
-     * Initialize the properties objects. Any exceptions here cause the App to
+     * Initialize the properties objects. Any exceptions here cause the JpxDataExtract to
      * exit.
      */
     private static void setupProperties() {

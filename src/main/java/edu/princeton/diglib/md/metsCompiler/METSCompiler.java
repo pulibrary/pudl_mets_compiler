@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,6 +24,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import edu.princeton.diglib.jpxData.JpxDataExtractor;
+import edu.princeton.diglib.md.mets.AmdSec;
 import edu.princeton.diglib.md.mets.FileSec;
 import edu.princeton.diglib.md.mets.MdSec;
 import edu.princeton.diglib.md.mets.Mets;
@@ -34,6 +37,7 @@ import edu.princeton.diglib.md.mets.FileSec.FileGrp;
 import edu.princeton.diglib.md.mets.FileSec.FileGrp.File;
 import edu.princeton.diglib.md.mets.FileSec.FileGrp.File.FLocat;
 import edu.princeton.diglib.md.mets.LocatorElement.LOCTYPE;
+import edu.princeton.diglib.md.mets.MdSec.MDTYPE;
 import edu.princeton.diglib.md.mets.MdSec.MdWrap;
 import edu.princeton.diglib.md.mets.StructMap.Div;
 import edu.princeton.diglib.md.mets.StructMap.Div.Fptr;
@@ -55,6 +59,7 @@ public class METSCompiler {
     private static boolean opaquifyOBJID;
 
     private static Map<String, String> idMap;
+    private static Map<String, String> admidMap;
 
     /**
      * Setting the boolean argument to true will make the OBJIDs on the METS
@@ -71,6 +76,7 @@ public class METSCompiler {
         opaquifyOBJID = opaquify;
         idgen = new IDGen(4);
         idMap = new HashMap<String, String>(250);
+        admidMap = new HashMap<String, String>(250);
 
     }
 
@@ -111,6 +117,7 @@ public class METSCompiler {
         doRoot(srcMets, cmpMets);
         doHeader(srcMets, cmpMets);
         doDmdSec(srcMets, cmpMets);
+        doAmdSec(srcMets, cmpMets);
         doFileSecThumb(srcMets, cmpMets);
         doStructMaps(srcMets, cmpMets);
     }
@@ -118,7 +125,7 @@ public class METSCompiler {
     private static void doRoot(Mets src, Mets cmp) {
         // OBJID
         if (!src.getOBJID().contains("/")) // slashes indicate temporary paths
-                                           // used during development
+            // used during development
             cmp.setOBJID(src.getOBJID());
         else if (src.getOBJID().contains("/") && opaquifyOBJID)
             cmp.setOBJID(UUID.randomUUID().toString());
@@ -187,6 +194,81 @@ public class METSCompiler {
         }
     }
 
+    /**
+     * Important - call this BEFORE {@link #doStructMaps(Mets, Mets)}. It
+     * populates our {@link #admidMap}. Not ideal, but we're in a hurry.
+     * 
+     * @param src
+     * @param cmp
+     * @throws MissingRecordException
+     */
+    private static void doAmdSec(Mets src, Mets cmp) throws MissingRecordException {
+        List<Div> aggregatesDivs = null;
+        for (StructMap smap : src.getStructMap()) {
+            if (smap.getType().equals("RelatedObjects")) {
+                Div rootDiv = smap.getDiv();
+                for (Div div : rootDiv.getDiv()) {
+                    if (div.getID().equals("aggregates")) {
+                        aggregatesDivs = div.getDiv();
+                    }
+                }
+            }
+        }
+
+        AmdSec amdSec = new AmdSec();
+        cmp.getAmdSec().add(amdSec);
+
+        for (Div div : aggregatesDivs) {
+            String mptrUri = div.getMptr().get(0).getXlinkHREF();
+
+            try {
+                String path;
+
+                // NPE gets thrown here if we can't find the record
+                path = accessor.getUriIndex().get(mptrUri).getPath();
+
+                Mets iMets;
+                iMets = metsReader.read(new FileInputStream(path));
+                FileGrp fileGrp;
+                fileGrp = iMets.getFileSec().getFileGrp().get(0);
+                for (File file : fileGrp.getFile()) {
+                    if (file.getUse().equals("deliverable")) {
+
+                        // check if the URI is in our lookup, if not, mint new
+                        String admid = admidMap.get(mptrUri);
+
+                        if (admid == null) { // then we haven't worked on this
+                            // one yet
+                            admid = idgen.mint();
+                            admidMap.put(mptrUri, admid);
+                        }
+
+                        // FLocat
+                        FLocat fcat = file.getFLocat().get(0);
+                        // href
+                        String url = fcat.getXlinkHREF();
+                        java.io.File imgFile;
+                        imgFile = new java.io.File(delivUriPath(url));
+                        Element mix = JpxDataExtractor.extractDimensionsAsMix(imgFile);
+                        MdSec techMd = new MdSec(admid);
+                        MdWrap wrap = new MdWrap(MDTYPE.NISOIMG);
+                        techMd.setMdWrap(wrap);
+                        wrap.getXmlData().add(mix);
+                        amdSec.getTechMD().add(techMd);
+                    }
+                }
+            } catch (Exception e) {
+                MetsHdr srcHdr = src.getMetsHdr();
+                String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
+                String msg = "Could not retrieve " + mptrUri + " from the database. Skipping "
+                        + srcUri;
+                String cause = "Cause: " + e.getMessage();
+                throw new MissingRecordException(msg + System.getProperty("line.separator") + cause);
+            }
+
+        }
+    }
+
     private static void doStructMaps(Mets src, Mets cmp) throws MissingRecordException,
             FileNotFoundException, SAXException, ParseException, IOException {
         // get rid of the default structMap; just easier
@@ -213,14 +295,17 @@ public class METSCompiler {
     private static void doDiv(Div srcDiv, Div cmpDiv, Mets src, Mets cmp)
             throws MissingRecordException, FileNotFoundException, SAXException, ParseException,
             IOException {
+
         if (!srcDiv.getDMDID().isEmpty()) {
             String srcId = srcDiv.getDMDID().get(0); // assuming one for now
             String cmpId = idMap.get(srcId); // error handling?
             cmpDiv.getDMDID().add(cmpId);
         }
+
         if (srcDiv.getLabel() != null) cmpDiv.setLabel(srcDiv.getLabel());
         if (srcDiv.getType() != null) cmpDiv.setType(srcDiv.getType());
         if (srcDiv.getORDER() != null) cmpDiv.setORDER(srcDiv.getORDER());
+
         // mptr
         if (!srcDiv.getMptr().isEmpty()) {
             for (Mptr mptr : srcDiv.getMptr()) {
@@ -232,14 +317,24 @@ public class METSCompiler {
                 String mptrUri = mptr.getXlinkHREF();
 
                 /*
-                 * check if the URI is in our lookup, if not, mint a new id and
-                 * update our new filesec
+                 * check if the URI is in our ID lookup, if not, mint a new id
+                 * and update our new filesec
                  */
                 String fileId = idMap.get(mptrUri);
-
                 if (fileId == null) {
                     fileId = idgen.mint();
                     idMap.put(mptrUri, fileId);
+
+                    /*
+                     * Check if the URI is in our ADMID lookup, if not, mint a
+                     * new id. doAmdSec also uses.
+                     */
+                    String admid = admidMap.get(mptrUri);
+                    if (admid == null) { // then we haven't worked on this one
+                        // yet
+                        admid = idgen.mint();
+                        admidMap.put(mptrUri, admid);
+                    }
 
                     try {
                         String path;
@@ -256,6 +351,8 @@ public class METSCompiler {
                                 // ID
                                 file.setID(fileId);
                                 file.setUse(null);
+                                // ADMID
+                                file.getADMID().add(admid);
                                 // FLocat
                                 FLocat fcat = file.getFLocat().get(0);
                                 // href
@@ -334,6 +431,18 @@ public class METSCompiler {
     private static String delivUriUrn(String uri) {
         String oldBase = "http://diglib.princeton.edu/images/deliverable/";
         String newBase = "urn:pudl:images:deliverable:";
+        return uri.replace(oldBase, newBase);
+    }
+
+    /*
+     * String hack to change devliverable file URIs to URNs (METS will all have
+     * this eventually
+     */
+    // TODO: make a property
+    private static String delivUriPath(String uri) {
+
+        String oldBase = "http://diglib.princeton.edu/images/deliverable/";
+        String newBase = "/mnt/libserv37/dps/";
         return uri.replace(oldBase, newBase);
     }
 
