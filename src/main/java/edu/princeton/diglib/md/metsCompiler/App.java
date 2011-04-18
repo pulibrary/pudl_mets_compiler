@@ -226,7 +226,7 @@ public class App {
 
             dbenvDir = localProps.getProperty("App.dbenvDir");
 
-            pudlNos = localProps.getProperty("App.pudlNos").split(",\\s?");
+            pudlNos = localProps.getProperty("App.pudlNos").split(",\\s*");
             imageMetsRoot = localProps.getProperty("App.imageMetsRoot");
             objectsRoot = localProps.getProperty("App.objectsRoot");
             textsRoot = localProps.getProperty("App.textsRoot");
