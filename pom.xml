@@ -4,7 +4,7 @@
 
 	<groupId>edu.princeton.diglib</groupId>
 	<artifactId>metsCompiler</artifactId>
-	<version>0.0.7</version>
+	<version>0.0.9</version>
 	<packaging>jar</packaging>
 
 	<name>metsCompiler</name>
@@ -13,7 +13,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<log4j-version>1.2.14</log4j-version>
-		<mets-api-version>0.1.2</mets-api-version>
+		<mets-api-version>0.1.3</mets-api-version>
 		<woodstox-version>4.0.8</woodstox-version>
 		<bdbje-version>4.0.103</bdbje-version>
 		<jersey-version>1.4-ea06</jersey-version>

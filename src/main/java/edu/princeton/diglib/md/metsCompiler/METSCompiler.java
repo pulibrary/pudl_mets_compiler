@@ -124,6 +124,7 @@ public class METSCompiler {
         doAmdSec(srcMets, cmpMets);
         doFileSecThumb(srcMets, cmpMets);
         doStructMaps(srcMets, cmpMets);
+        doStructLink(srcMets, cmpMets);
     }
 
     private static void doRoot(Mets src, Mets cmp) {
@@ -310,6 +311,7 @@ public class METSCompiler {
         if (srcDiv.getLabel() != null) cmpDiv.setLabel(srcDiv.getLabel());
         if (srcDiv.getType() != null) cmpDiv.setType(srcDiv.getType());
         if (srcDiv.getORDER() != null) cmpDiv.setORDER(srcDiv.getORDER());
+        if (srcDiv.getID() != null) cmpDiv.setID(srcDiv.getID());
 
         // mptr
         if (!srcDiv.getMptr().isEmpty()) {
@@ -429,6 +431,12 @@ public class METSCompiler {
         }
     }
 
+    private static void doStructLink(Mets src, Mets cmp) {
+        if (src.getStructLink() != null) {
+            cmp.setStructLink(src.getStructLink());
+        }
+    }
+    
     /*
      * String hack to change devliverable file URIs to URNs (METS will all have
      * this eventually
