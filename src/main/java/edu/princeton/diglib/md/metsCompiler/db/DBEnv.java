@@ -60,6 +60,8 @@ public class DBEnv {
             // able to create it if necessary
             myEnvConfig.setAllowCreate(!readOnly);
             dataStoreConfig.setAllowCreate(!readOnly);
+            // @see http://download.oracle.com/docs/cd/E17277_02/html/GettingStartedGuide/databases.html#tempdbje
+            dataStoreConfig.setTemporary(true);
             // Configure environment and store for read-only as appropriate
             myEnvConfig.setReadOnly(readOnly);
             dataStoreConfig.setReadOnly(readOnly);
