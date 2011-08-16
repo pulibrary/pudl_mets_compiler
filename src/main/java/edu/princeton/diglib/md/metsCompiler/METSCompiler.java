@@ -64,14 +64,14 @@ public class METSCompiler {
     private static String imagesHome;
 
     /**
-     * Setting the boolean argument to true will make the OBJIDs on the METS
-     * uuids if the currrent value is a path.
+     * Setting the boolean argument to true will make the OBJIDs on the METS uuids if the currrent
+     * value is a path.
      * 
      * @throws DatatypeConfigurationException
      * @throws ParserConfigurationException
      */
-    public METSCompiler(EntityAccessor accessor, String outURL, boolean opaquify)
-            throws ParserConfigurationException, DatatypeConfigurationException {
+    public METSCompiler(EntityAccessor accessor, String outURL, boolean opaquify) throws ParserConfigurationException,
+            DatatypeConfigurationException {
         metsReader = new MetsReader();
         metsWriter = new MetsWriter();
         METSCompiler.accessor = accessor;
@@ -83,8 +83,8 @@ public class METSCompiler {
 
     }
 
-    public void compileToFile(String pathToSeed, java.io.File file) throws SAXException,
-            IOException, MissingRecordException, ParseException {
+    public void compileToFile(String pathToSeed, java.io.File file) throws SAXException, IOException,
+            MissingRecordException, ParseException {
 
         Mets srcMets = metsReader.read(new FileInputStream(pathToSeed));
         Mets cmpMets = new Mets();
@@ -99,9 +99,8 @@ public class METSCompiler {
         }
     }
 
-    public void compileToOutputStream(String pathToSeed, OutputStream out)
-            throws TransformerException, SAXException, IOException, MissingRecordException,
-            ParseException {
+    public void compileToOutputStream(String pathToSeed, OutputStream out) throws TransformerException, SAXException,
+            IOException, MissingRecordException, ParseException {
 
         Mets srcMets = metsReader.read(new FileInputStream(pathToSeed));
         Mets cmpMets = new Mets();
@@ -112,8 +111,8 @@ public class METSCompiler {
 
     }
 
-    private static void compile(Mets srcMets, Mets cmpMets) throws SAXException, IOException,
-            MissingRecordException, ParseException {
+    private static void compile(Mets srcMets, Mets cmpMets) throws SAXException, IOException, MissingRecordException,
+            ParseException {
         idgen.reset();
         idMap.clear();
         admidMap.clear();
@@ -163,8 +162,7 @@ public class METSCompiler {
     // structMap, so that we can keep track of the ID
     // maybe we call this function for each DMDID we run accross? (with the ID
     // as an arg?)
-    private static void doDmdSec(Mets src, Mets cmp) throws SAXException, IOException,
-            MissingRecordException {
+    private static void doDmdSec(Mets src, Mets cmp) throws SAXException, IOException, MissingRecordException {
 
         for (MdSec dmdSec : src.getDmdSec()) { // assumes there's an mdRef and
             // not an mdWrap
@@ -191,8 +189,7 @@ public class METSCompiler {
                 } catch (NullPointerException e) {
                     MetsHdr srcHdr = src.getMetsHdr();
                     String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
-                    String msg = "Could not retrieve " + mdataUri + " from the database. Skipping "
-                            + srcUri;
+                    String msg = "Could not retrieve " + mdataUri + " from the database. Skipping " + srcUri;
                     throw new MissingRecordException(msg);
                 }
             }
@@ -200,8 +197,8 @@ public class METSCompiler {
     }
 
     /**
-     * Important - call this BEFORE {@link #doStructMaps(Mets, Mets)}. It
-     * populates our {@link #admidMap}. Not ideal, but we're in a hurry.
+     * Important - call this BEFORE {@link #doStructMaps(Mets, Mets)}. It populates our
+     * {@link #admidMap}. Not ideal, but we're in a hurry.
      * 
      * @param src
      * @param cmp
@@ -266,8 +263,7 @@ public class METSCompiler {
             } catch (Exception e) {
                 MetsHdr srcHdr = src.getMetsHdr();
                 String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
-                String msg = "Could not retrieve " + mptrUri + " from the database. Skipping "
-                        + srcUri;
+                String msg = "Could not retrieve technical metadata for " + mptrUri + ". Skipping " + srcUri;
                 String cause = "Cause: " + e.getMessage();
                 throw new MissingRecordException(msg + System.getProperty("line.separator") + cause);
             }
@@ -275,8 +271,8 @@ public class METSCompiler {
         }
     }
 
-    private static void doStructMaps(Mets src, Mets cmp) throws MissingRecordException,
-            FileNotFoundException, SAXException, ParseException, IOException {
+    private static void doStructMaps(Mets src, Mets cmp) throws MissingRecordException, FileNotFoundException,
+            SAXException, ParseException, IOException {
         // get rid of the default structMap; just easier
         cmp.getStructMap().clear();
 
@@ -290,17 +286,18 @@ public class METSCompiler {
             StructMap cmpSmap = new StructMap();
             cmp.getStructMap().add(cmpSmap);
 
-            if (srcSmap.getLabel() != null) cmpSmap.setLabel(srcSmap.getLabel());
-            if (srcSmap.getType() != null) cmpSmap.setType(srcSmap.getType());
+            if (srcSmap.getLabel() != null)
+                cmpSmap.setLabel(srcSmap.getLabel());
+            if (srcSmap.getType() != null)
+                cmpSmap.setType(srcSmap.getType());
 
             doDiv(srcSmap.getDiv(), cmpSmap.getDiv(), src, cmp);
 
         }
     }
 
-    private static void doDiv(Div srcDiv, Div cmpDiv, Mets src, Mets cmp)
-            throws MissingRecordException, FileNotFoundException, SAXException, ParseException,
-            IOException {
+    private static void doDiv(Div srcDiv, Div cmpDiv, Mets src, Mets cmp) throws MissingRecordException,
+            FileNotFoundException, SAXException, ParseException, IOException {
 
         if (!srcDiv.getDMDID().isEmpty()) {
             String srcId = srcDiv.getDMDID().get(0); // assuming one for now
@@ -308,80 +305,111 @@ public class METSCompiler {
             cmpDiv.getDMDID().add(cmpId);
         }
 
-        if (srcDiv.getLabel() != null) cmpDiv.setLabel(srcDiv.getLabel());
-        if (srcDiv.getType() != null) cmpDiv.setType(srcDiv.getType());
-        if (srcDiv.getORDER() != null) cmpDiv.setORDER(srcDiv.getORDER());
-        if (srcDiv.getID() != null) cmpDiv.setID(srcDiv.getID());
+        if (srcDiv.getLabel() != null)
+            cmpDiv.setLabel(srcDiv.getLabel());
+        if (srcDiv.getType() != null)
+            cmpDiv.setType(srcDiv.getType());
+        if (srcDiv.getORDER() != null)
+            cmpDiv.setORDER(srcDiv.getORDER());
+        if (srcDiv.getID() != null)
+            cmpDiv.setID(srcDiv.getID());
 
         // mptr
         if (!srcDiv.getMptr().isEmpty()) {
-            for (Mptr mptr : srcDiv.getMptr()) {
-                // a new fptr
-                Fptr fptr = new Fptr();
-                cmpDiv.getFptr().add(fptr);
-
-                // get the mptr hrefL the URI for the record we need
-                String mptrUri = mptr.getXlinkHREF();
-
-                /*
-                 * check if the URI is in our ID lookup, if not, mint a new id
-                 * and update our new filesec
-                 */
-                String fileId = idMap.get(mptrUri);
-                if (fileId == null) {
-                    fileId = idgen.mint();
-                    idMap.put(mptrUri, fileId);
-
-                    /*
-                     * Check if the URI is in our ADMID lookup, if not, mint a
-                     * new id. doAmdSec also uses.
-                     */
-                    String admid = admidMap.get(mptrUri);
-                    if (admid == null) { // then we haven't worked on this one
-                        // yet
-                        admid = idgen.mint();
-                        admidMap.put(mptrUri, admid);
-                    }
-
+            // for aggregated Object METS, as opposed to Image METS, which are more common.
+            if (srcDiv.getType().equals("AggregatedObject")) {
+                for (Mptr mptr : srcDiv.getMptr()) {
+                    String mptrUri = mptr.getXlinkHREF();
                     try {
                         String path;
-
-                        // NPE gets thrown here if we can't find the record
                         path = accessor.getUriIndex().get(mptrUri).getPath();
-
-                        Mets iMets;
-                        iMets = metsReader.read(new FileInputStream(path));
-                        FileGrp fileGrp;
-                        fileGrp = iMets.getFileSec().getFileGrp().get(0);
-                        for (File file : fileGrp.getFile()) {
-                            if (file.getUse().equals("deliverable")) {
-                                // ID
-                                file.setID(fileId);
-                                file.setUse(null);
-                                // ADMID
-                                file.getADMID().add(admid);
-                                // FLocat
-                                FLocat fcat = file.getFLocat().get(0);
-                                // href
-                                String url = fcat.getXlinkHREF();
-                                fcat.setXlinkHREF(delivUriUrn(url));
-                                // loctype
-                                fcat.setLOCTYPE(LOCTYPE.URN);
-
-                                cmp.getFileSec().getFileGrp().get(1).getFile().add(file);
-                            }
-                        }
+                        
+                        Mets oMets;
+                        oMets = metsReader.read(new FileInputStream(path));
+                        
+                        //TODO: potentially. We might need to go into the Object 
+                        // METS, pull in its image METS and have those represented here.
+                        
+                        String contentId = oMets.getOBJID();
+                        cmpDiv.getCONTENTIDS().add(contentId);
+                        
                     } catch (NullPointerException e) {
                         MetsHdr srcHdr = src.getMetsHdr();
                         String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
-                        String msg = "Could not retrieve " + mptrUri
-                                + " from the database. Skipping " + srcUri;
+                        String msg = "Could not retrieve Object METS " + mptrUri + " from the database. Skipping " + srcUri;
                         throw new MissingRecordException(msg);
                     }
 
                 }
+            } else {
+                for (Mptr mptr : srcDiv.getMptr()) {
+                    // a new fptr
+                    Fptr fptr = new Fptr();
+                    cmpDiv.getFptr().add(fptr);
 
-                fptr.setFILEID(fileId);
+                    // get the mptr href
+                    // the URI for the record we need
+                    String mptrUri = mptr.getXlinkHREF();
+
+                    /*
+                     * check if the URI is in our ID lookup, if not, mint a new id and update our
+                     * new filesec
+                     */
+                    String fileId = idMap.get(mptrUri);
+                    if (fileId == null) {
+                        fileId = idgen.mint();
+                        idMap.put(mptrUri, fileId);
+
+                        /*
+                         * Check if the URI is in our ADMID lookup, if not, mint a new id. doAmdSec
+                         * also uses.
+                         */
+                        String admid = admidMap.get(mptrUri);
+                        if (admid == null) { // then we haven't worked on this one
+                            // yet
+                            admid = idgen.mint();
+                            admidMap.put(mptrUri, admid);
+                        }
+
+                        try {
+                            String path;
+
+                            // NPE gets thrown here if we can't find the record
+                            path = accessor.getUriIndex().get(mptrUri).getPath();
+
+                            Mets iMets;
+                            iMets = metsReader.read(new FileInputStream(path));
+                            FileGrp fileGrp;
+                            fileGrp = iMets.getFileSec().getFileGrp().get(0);
+                            for (File file : fileGrp.getFile()) {
+                                if (file.getUse().equals("deliverable")) {
+                                    // ID
+                                    file.setID(fileId);
+                                    file.setUse(null);
+                                    // ADMID
+                                    file.getADMID().add(admid);
+                                    // FLocat
+                                    FLocat fcat = file.getFLocat().get(0);
+                                    // href
+                                    String url = fcat.getXlinkHREF();
+                                    fcat.setXlinkHREF(delivUriUrn(url));
+                                    // loctype
+                                    fcat.setLOCTYPE(LOCTYPE.URN);
+
+                                    cmp.getFileSec().getFileGrp().get(1).getFile().add(file);
+                                }
+                            }
+                        } catch (NullPointerException e) {
+                            MetsHdr srcHdr = src.getMetsHdr();
+                            String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
+                            String msg = "Could not retrieve Image METS " + mptrUri + " from the database. Skipping " + srcUri;
+                            throw new MissingRecordException(msg);
+                        }
+
+                    }
+
+                    fptr.setFILEID(fileId);
+                }
             }
         }
 
@@ -392,7 +420,7 @@ public class METSCompiler {
             if ((id != null && !id.equals("isAggregatedBy")) || id == null) {
                 Div newChildDiv = new Div();
                 cmpDiv.getDiv().add(newChildDiv);
-                doDiv(childDiv, newChildDiv, src, cmp); // recursive
+                doDiv(childDiv, newChildDiv, src, cmp); // RECURSIVE CALL
             } else if ((id != null && id.equals("isAggregatedBy"))) {
                 Div newChildDiv = new Div();
                 cmpDiv.getDiv().add(newChildDiv);
@@ -436,10 +464,9 @@ public class METSCompiler {
             cmp.setStructLink(src.getStructLink());
         }
     }
-    
+
     /*
-     * String hack to change devliverable file URIs to URNs (METS will all have
-     * this eventually
+     * String hack to change devliverable file URIs to URNs (METS will all have this eventually
      */
     private static String delivUriUrn(String uri) {
         String oldBase = "http://diglib.princeton.edu/images/deliverable/";
@@ -448,8 +475,7 @@ public class METSCompiler {
     }
 
     /*
-     * String hack to change devliverable file URIs to URNs (METS will all have
-     * this eventually
+     * String hack to change devliverable file URIs to URNs (METS will all have this eventually
      */
     // TODO: make a property
     private static String delivUriPath(String uri) {
