@@ -366,7 +366,6 @@ public class METSCompiler {
                          */
                         String admid = admidMap.get(mptrUri);
                         if (admid == null) { // then we haven't worked on this one
-                            // yet
                             admid = idgen.mint();
                             admidMap.put(mptrUri, admid);
                         }
