@@ -321,22 +321,25 @@ public class METSCompiler {
                 for (Mptr mptr : srcDiv.getMptr()) {
                     String mptrUri = mptr.getXlinkHREF();
                     try {
-                        String path;
-                        path = accessor.getUriIndex().get(mptrUri).getPath();
-                        
-                        Mets oMets;
-                        oMets = metsReader.read(new FileInputStream(path));
-                        
-                        //TODO: potentially. We might need to go into the Object 
-                        // METS, pull in its image METS and have those represented here.
-                        
-                        String contentId = oMets.getOBJID();
-                        cmpDiv.getCONTENTIDS().add(contentId);
-                        
+                        for (String contentId : srcDiv.getCONTENTIDS()) {
+                            cmpDiv.getCONTENTIDS().add(contentId);
+                        }
+//                        // TODO: potentially. We might need to go into the Object
+//                        // METS, pull in its image METS and have those represented here.
+//
+//                        String path;
+//                        path = accessor.getUriIndex().get(mptrUri).getPath();
+//
+//                        Mets oMets;
+//                        oMets = metsReader.read(new FileInputStream(path));
+//                        String contentId = oMets.getOBJID();
+//                        cmpDiv.getCONTENTIDS().add(contentId);
+
                     } catch (NullPointerException e) {
                         MetsHdr srcHdr = src.getMetsHdr();
                         String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
-                        String msg = "Could not retrieve Object METS " + mptrUri + " from the database. Skipping " + srcUri;
+                        String msg = "Could not retrieve Object METS " + mptrUri + " from the database. Skipping "
+                                + srcUri;
                         throw new MissingRecordException(msg);
                     }
 
@@ -401,7 +404,8 @@ public class METSCompiler {
                         } catch (NullPointerException e) {
                             MetsHdr srcHdr = src.getMetsHdr();
                             String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
-                            String msg = "Could not retrieve Image METS " + mptrUri + " from the database. Skipping " + srcUri;
+                            String msg = "Could not retrieve Image METS " + mptrUri + " from the database. Skipping "
+                                    + srcUri;
                             throw new MissingRecordException(msg);
                         }
 
