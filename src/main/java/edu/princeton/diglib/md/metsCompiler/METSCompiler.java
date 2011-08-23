@@ -317,7 +317,7 @@ public class METSCompiler {
         // mptr
         if (!srcDiv.getMptr().isEmpty()) {
             // for aggregated Object METS, as opposed to Image METS, which are more common.
-            if (srcDiv.getType().equals("AggregatedObject")) {
+            if (srcDiv.getType() != null && srcDiv.getType().equals("AggregatedObject")) {
                 for (Mptr mptr : srcDiv.getMptr()) {
                     String mptrUri = mptr.getXlinkHREF();
                     try {
