@@ -222,6 +222,7 @@ public class METSCompiler {
         cmp.getAmdSec().add(amdSec);
 
         for (Div div : aggregatesDivs) {
+            if (!div.getType().equals("AggregatedObject")) {
             String mptrUri = div.getMptr().get(0).getXlinkHREF();
 
             try {
@@ -268,6 +269,7 @@ public class METSCompiler {
                 throw new MissingRecordException(msg + System.getProperty("line.separator") + cause);
             }
 
+            }
         }
     }
 
