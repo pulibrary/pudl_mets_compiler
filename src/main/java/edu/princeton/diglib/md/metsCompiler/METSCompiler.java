@@ -439,7 +439,7 @@ public class METSCompiler {
 				newChildDiv.setType("IsPartOf");
 
 				Mptr badMptr = childDiv.getDiv().get(0).getMptr().get(0);
-				String coll = hackOutPudlNo(badMptr.getXlinkHREF());
+				String coll = getCollectionId(badMptr.getXlinkHREF());
 				newChildDiv.getCONTENTIDS().add(coll);
 
 			}
@@ -498,9 +498,9 @@ public class METSCompiler {
 		return uri.replace(oldBase, newBase);
 	}
 
-	private static String hackOutPudlNo(String aggBy) {
-		int begin = aggBy.indexOf("pudl");
-		int end = begin + 8;
+	private static String getCollectionId(String aggBy) {
+	    int begin = "http://diglib.princeton.edu/mdata/".length();
+	    int end = aggBy.length() - ".ead".length();
 		return aggBy.substring(begin, end);
 	}
 
