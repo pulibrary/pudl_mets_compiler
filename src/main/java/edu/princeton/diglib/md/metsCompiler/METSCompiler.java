@@ -402,9 +402,10 @@ public class METSCompiler {
 									FLocat fcat = file.getFLocat().get(0);
 									// href
 									String url = fcat.getXlinkHREF();
-									fcat.setXlinkHREF(delivUriUrn(url));
+									fcat.setXlinkHREF(delivUriToLorisID(url));
 									// loctype
-									fcat.setLOCTYPE(LOCTYPE.URN);
+									fcat.setLOCTYPE(LOCTYPE.OTHER);
+									fcat.setOTHERLOCTYPE("LorisID");
 
 									cmp.getFileSec().getFileGrp().get(1).getFile().add(file);
 								}
@@ -462,9 +463,10 @@ public class METSCompiler {
 				FLocat fcat = file.getFLocat().get(0);
 				// href
 				String url = fcat.getXlinkHREF();
-				fcat.setXlinkHREF(delivUriUrn(url));
+				fcat.setXlinkHREF(delivUriToLorisID(url));
 				// loctype
-				fcat.setLOCTYPE(LOCTYPE.URN);
+				fcat.setLOCTYPE(LOCTYPE.OTHER);
+				fcat.setOTHERLOCTYPE("LorisID");
 				cmp.getFileSec().getFileGrp().add(newGrp);
 			}
 		}
@@ -476,19 +478,32 @@ public class METSCompiler {
 		}
 	}
 
+//	/*
+//	 * String hack to change devliverable file URIs to URNs (METS will all have
+//	 * this eventually
+//	 */
+//	private static String delivUriUrn(String uri) {
+//		String oldBase = "http://diglib.princeton.edu/images/deliverable/";
+//		String newBase = "urn:pudl:images:deliverable:";
+//		return uri.replace(oldBase, newBase);
+//	}
+	
 	/*
 	 * String hack to change devliverable file URIs to URNs (METS will all have
 	 * this eventually
 	 */
-	private static String delivUriUrn(String uri) {
+	private static String delivUriToLorisID(String uri) {
 		String oldBase = "http://diglib.princeton.edu/images/deliverable/";
-		String newBase = "urn:pudl:images:deliverable:";
-		return uri.replace(oldBase, newBase);
+		String id = uri.replace(oldBase, "");
+		id = id.replace("\\.mets$", "");
+		id = id.replace("/", "%2F");
+		return id;
 	}
+	
+	
 
 	/*
-	 * String hack to change devliverable file URIs to URNs (METS will all have
-	 * this eventually
+	 * 
 	 */
 	// TODO: make a property
 	private static String delivUriPath(String uri) {
