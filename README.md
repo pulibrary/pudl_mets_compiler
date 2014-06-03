@@ -23,10 +23,10 @@ this command.
 Configuration
 -------------
 Each time the application is executed, it looks for a file called 
-"localProps.xml" on the classpath.  If this file can not be found, it will be
+"config.xml" on the classpath.  If this file can not be found, it will be
 created and the application will exit:
 
-"A file called localProps.xml has been created in this directory. Please update 
+"A file called config.xml has been created in this directory. Please update 
 it and run again."
 
 Edit that file and run again. Paths may be absolute (safest) or relative to the 
@@ -36,5 +36,5 @@ This file can be edited before each run to facilitate
 compilation of different projects.  The comments in the file should explain
 the function of each property.
 
-Note that calling `mvn clean` will delete the target directory, localProps.xml, 
+Note that calling `mvn clean` will delete the target directory, config.xml, 
 and the application log.
