@@ -76,7 +76,7 @@ public class METSCompiler {
 		metsWriter = new MetsWriter();
 		METSCompiler.accessor = accessor;
 		opaquifyOBJID = opaquify;
-		idgen = new IDGen(4);
+		idgen = new IDGen(5);
 		idMap = new HashMap<String, String>(250);
 		admidMap = new HashMap<String, String>(250);
 		imagesHome = App.getLocalProps().getProperty("METSCompiler.imagesHome");
@@ -315,8 +315,13 @@ public class METSCompiler {
 			cmpDiv.setType(srcDiv.getType());
 		if (srcDiv.getORDER() != null)
 			cmpDiv.setORDER(srcDiv.getORDER());
-		if (srcDiv.getID() != null)
+		if (srcDiv.getID() == null) {
+			cmpDiv.setID(idgen.mint());
+		}
+		else {
 			cmpDiv.setID(srcDiv.getID());
+		}
+		
 
 		// mptr
 		if (!srcDiv.getMptr().isEmpty()) {
@@ -402,10 +407,14 @@ public class METSCompiler {
 									FLocat fcat = file.getFLocat().get(0);
 									// href
 									String url = fcat.getXlinkHREF();
-									fcat.setXlinkHREF(delivUriToLorisID(url));
-									// loctype
-									fcat.setLOCTYPE(LOCTYPE.OTHER);
-									fcat.setOTHERLOCTYPE("LorisID");
+									
+									fcat.setXlinkHREF(delivUriUrn(url));
+									fcat.setLOCTYPE(LOCTYPE.URN);
+									
+//									fcat.setXlinkHREF(delivUriToLorisID(url));
+//									// loctype
+//									fcat.setLOCTYPE(LOCTYPE.OTHER);
+//									fcat.setOTHERLOCTYPE("LorisID");
 
 									cmp.getFileSec().getFileGrp().get(1).getFile().add(file);
 								}
@@ -462,12 +471,18 @@ public class METSCompiler {
 				// FLocat
 				FLocat fcat = file.getFLocat().get(0);
 				// href
+//				String url = fcat.getXlinkHREF();
+//				fcat.setXlinkHREF(delivUriToLorisID(url));
+//				// loctype
+//				fcat.setLOCTYPE(LOCTYPE.OTHER);
+//				fcat.setOTHERLOCTYPE("LorisID");
+
 				String url = fcat.getXlinkHREF();
-				fcat.setXlinkHREF(delivUriToLorisID(url));
-				// loctype
-				fcat.setLOCTYPE(LOCTYPE.OTHER);
-				fcat.setOTHERLOCTYPE("LorisID");
+				fcat.setXlinkHREF(delivUriUrn(url));
+				fcat.setLOCTYPE(LOCTYPE.URN);
+				
 				cmp.getFileSec().getFileGrp().add(newGrp);
+				
 			}
 		}
 	}
@@ -482,11 +497,11 @@ public class METSCompiler {
 //	 * String hack to change devliverable file URIs to URNs (METS will all have
 //	 * this eventually
 //	 */
-//	private static String delivUriUrn(String uri) {
-//		String oldBase = "http://diglib.princeton.edu/images/deliverable/";
-//		String newBase = "urn:pudl:images:deliverable:";
-//		return uri.replace(oldBase, newBase);
-//	}
+	private static String delivUriUrn(String uri) {
+		String oldBase = "http://diglib.princeton.edu/images/deliverable/";
+		String newBase = "urn:pudl:images:deliverable:";
+		return uri.replace(oldBase, newBase);
+	}
 	
 	/*
 	 * String hack to change devliverable file URIs to URNs (METS will all have

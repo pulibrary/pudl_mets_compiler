@@ -3,3 +3,4 @@
 .classpath
 target/
 config.xml
+*.log
