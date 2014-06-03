@@ -1,22 +1,27 @@
-PUDL METS Compiler version 0.0.1.
+PUDL METS Compiler
+=================
 
-1. How to build
+How to Build
+------------
 From the root directory of the project (the one that contains "pom.xml") call
 
 me@my:{root}$ mvn clean assembly:assembly
 
-If the build is successful, a target directory will be created. Is should
-contain. among other things, a jar file called 
-mets-compiler-jar-with-dependencies.jar
+If the build is successful, a target directory will be created. Is should contain. among other things, a jar file called mets-compiler-jar-with-dependencies.jar
 
-2. How to run
+How to Run
+----------
 The aforementioned jar file is executable, so
-me@my:{root}$ java -jar target/mets-compiler-jar-with-dependencies.jar
 
-There is also a shell script, run.sh, in the root of the project that wraps
+```
+me@my:{root}$ java -jar target/mets-compiler-jar-with-dependencies.jar
+```
+
+There is also a shell script, `run.sh`, in the root of the project that wraps
 this command.
 
-3. Configuration
+Configuration
+-------------
 Each time the application is executed, it looks for a file called 
 "localProps.xml" on the classpath.  If this file can not be found, it will be
 created and the application will exit:
