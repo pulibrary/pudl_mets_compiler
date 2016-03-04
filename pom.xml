@@ -116,7 +116,7 @@
 	<repositories>
 		<repository>
 			<id>edu.princeton.diglib</id>
-			<url>http://diglib3.princeton.edu/m2/</url>
+			<url>http://diglibsvn.princeton.edu/m2/</url>
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
