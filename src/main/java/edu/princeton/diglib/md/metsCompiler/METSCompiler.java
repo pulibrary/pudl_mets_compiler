@@ -18,7 +18,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
-import edu.princeton.diglib.jpxData.JpxDataExtractor;
 import edu.princeton.diglib.md.mets.AmdSec;
 import edu.princeton.diglib.md.mets.FileSec;
 import edu.princeton.diglib.md.mets.MdSec;
@@ -243,18 +242,18 @@ public class METSCompiler {
 								admidMap.put(mptrUri, admid);
 							}
 
-							// FLocat
-							FLocat fcat = file.getFLocat().get(0);
-							// href
-							String url = fcat.getXlinkHREF();
-							java.io.File imgFile;
-							imgFile = new java.io.File(delivUriPath(url));
-							Element mix = JpxDataExtractor.extractDimensionsAsMix(imgFile);
-							MdSec techMd = new MdSec(admid);
-							MdWrap wrap = new MdWrap(MDTYPE.NISOIMG);
-							techMd.setMdWrap(wrap);
-							wrap.getXmlData().add(mix);
-							amdSec.getTechMD().add(techMd);
+//							// FLocat
+//							FLocat fcat = file.getFLocat().get(0);
+//							// href
+//							String url = fcat.getXlinkHREF();
+//							java.io.File imgFile;
+//							imgFile = new java.io.File(delivUriPath(url));
+//							Element mix = JpxDataExtractor.extractDimensionsAsMix(imgFile);
+//							MdSec techMd = new MdSec(admid);
+//							MdWrap wrap = new MdWrap(MDTYPE.NISOIMG);
+//							techMd.setMdWrap(wrap);
+//							wrap.getXmlData().add(mix);
+//							amdSec.getTechMD().add(techMd);
 						}
 					}
 				} catch (Exception e) {
