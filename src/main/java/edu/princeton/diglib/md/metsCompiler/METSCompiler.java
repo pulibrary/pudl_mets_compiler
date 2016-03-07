@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -18,19 +17,18 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
-import edu.princeton.diglib.md.mets.AmdSec;
 import edu.princeton.diglib.md.mets.FileSec;
+import edu.princeton.diglib.md.mets.FileSec.FileGrp;
+import edu.princeton.diglib.md.mets.FileSec.FileGrp.File;
+import edu.princeton.diglib.md.mets.FileSec.FileGrp.File.FLocat;
+import edu.princeton.diglib.md.mets.LocatorElement.LOCTYPE;
 import edu.princeton.diglib.md.mets.MdSec;
+import edu.princeton.diglib.md.mets.MdSec.MdWrap;
 import edu.princeton.diglib.md.mets.Mets;
 import edu.princeton.diglib.md.mets.MetsHdr;
 import edu.princeton.diglib.md.mets.MetsReader;
 import edu.princeton.diglib.md.mets.MetsWriter;
 import edu.princeton.diglib.md.mets.StructMap;
-import edu.princeton.diglib.md.mets.FileSec.FileGrp;
-import edu.princeton.diglib.md.mets.FileSec.FileGrp.File;
-import edu.princeton.diglib.md.mets.FileSec.FileGrp.File.FLocat;
-import edu.princeton.diglib.md.mets.LocatorElement.LOCTYPE;
-import edu.princeton.diglib.md.mets.MdSec.MdWrap;
 import edu.princeton.diglib.md.mets.StructMap.Div;
 import edu.princeton.diglib.md.mets.StructMap.Div.Fptr;
 import edu.princeton.diglib.md.mets.StructMap.Div.Mptr;
@@ -51,7 +49,6 @@ public class METSCompiler {
 	private static boolean opaquifyOBJID;
 
 	private static Map<String, String> idMap;
-	private static Map<String, String> admidMap;
 
 	private static String imagesHome;
 
@@ -70,7 +67,6 @@ public class METSCompiler {
 		opaquifyOBJID = opaquify;
 		idgen = new IDGen(5);
 		idMap = new HashMap<String, String>(250);
-		admidMap = new HashMap<String, String>(250);
 		imagesHome = App.getLocalProps().getProperty("METSCompiler.imagesHome");
 
 	}
@@ -120,12 +116,10 @@ public class METSCompiler {
 			ParseException {
 		idgen.reset();
 		idMap.clear();
-		admidMap.clear();
 		cmpMets.setFileSec(new FileSec());// No fileSec by default
 		doRoot(srcMets, cmpMets);
-//		doHeader(srcMets, cmpMets);
+		doHeader(srcMets, cmpMets);
 		doDmdSec(srcMets, cmpMets);
-//		 doAmdSec(srcMets, cmpMets);
 		doFileSecThumb(srcMets, cmpMets);
 		doStructMaps(srcMets, cmpMets);
 		doStructLink(srcMets, cmpMets);
@@ -133,9 +127,9 @@ public class METSCompiler {
 
 	private static void doRoot(Mets src, Mets cmp) {
 		// OBJID
-		if (!src.getOBJID().contains("/")) // slashes indicate temporary paths
-			// used during development
-			cmp.setOBJID(src.getOBJID());
+		// slashes indicate temporary paths used during development
+		if (!src.getOBJID().contains("/"))
+			cmp.setOBJID("ark:/88435/" + src.getOBJID());
 		else if (src.getOBJID().contains("/") && opaquifyOBJID)
 			cmp.setOBJID(UUID.randomUUID().toString());
 		else
@@ -151,8 +145,13 @@ public class METSCompiler {
 
 		cmp.setMetsHdr(cHdr);
 		cHdr.setCREATEDATE(sHdr.getCREATEDATE());
-		cHdr.setMetsDocumentID(sHdr.getAltRecordID().get(0));
-		cHdr.getAgent().add(sHdr.getAgent().get(0));
+		String docId = sHdr.getAltRecordID().get(0).getIdentifier();
+		docId = docId.replace("http://diglib.princeton.edu/mdata/", "");
+		
+//		cHdr.setMetsDocumentID(sHdr.getAltRecordID().get(0));
+		MetsHdr.RecordID rid = new MetsHdr.RecordID(docId);
+		rid.setType("PUDL");
+		cHdr.setMetsDocumentID(rid);
 	}
 
 	/**
@@ -291,17 +290,6 @@ public class METSCompiler {
 						fileId = idgen.mint();
 						idMap.put(mptrUri, fileId);
 
-						/*
-						 * Check if the URI is in our ADMID lookup, if not, mint
-						 * a new id. doAmdSec also uses.
-						 */
-						String admid = admidMap.get(mptrUri);
-						if (admid == null) { // then we haven't worked on this
-												// one
-							admid = idgen.mint();
-							admidMap.put(mptrUri, admid);
-						}
-
 						try {
 							String path;
 
@@ -318,20 +306,13 @@ public class METSCompiler {
 									// ID
 									file.setID(fileId);
 									file.setUse(null);
-									// ADMID
-									file.getADMID().add(admid);
 									// FLocat
 									FLocat fcat = file.getFLocat().get(0);
 									// href
 									String url = fcat.getXlinkHREF();
 									
 									fcat.setXlinkHREF(delivUriUrn(url));
-									fcat.setLOCTYPE(LOCTYPE.URN);
-									
-//									fcat.setXlinkHREF(delivUriToLorisID(url));
-//									// loctype
-//									fcat.setLOCTYPE(LOCTYPE.OTHER);
-//									fcat.setOTHERLOCTYPE("LorisID");
+									fcat.setLOCTYPE(LOCTYPE.URL);
 
 									cmp.getFileSec().getFileGrp().get(1).getFile().add(file);
 								}
@@ -387,16 +368,10 @@ public class METSCompiler {
 				newGrp.getFile().add(file);
 				// FLocat
 				FLocat fcat = file.getFLocat().get(0);
-				// href
-//				String url = fcat.getXlinkHREF();
-//				fcat.setXlinkHREF(delivUriToLorisID(url));
-//				// loctype
-//				fcat.setLOCTYPE(LOCTYPE.OTHER);
-//				fcat.setOTHERLOCTYPE("LorisID");
 
 				String url = fcat.getXlinkHREF();
 				fcat.setXlinkHREF(delivUriUrn(url));
-				fcat.setLOCTYPE(LOCTYPE.URN);
+				fcat.setLOCTYPE(LOCTYPE.URL);
 				
 				cmp.getFileSec().getFileGrp().add(newGrp);
 				
@@ -410,40 +385,17 @@ public class METSCompiler {
 		}
 	}
 
-//	/*
-//	 * String hack to change devliverable file URIs to URNs (METS will all have
-//	 * this eventually
-//	 */
-	private static String delivUriUrn(String uri) {
-		String oldBase = "http://diglib.princeton.edu/images/deliverable/";
-		String newBase = "urn:pudl:images:deliverable:";
-		return uri.replace(oldBase, newBase);
-	}
-	
 	/*
 	 * String hack to change devliverable file URIs to URNs (METS will all have
 	 * this eventually
 	 */
-	private static String delivUriToLorisID(String uri) {
-		String oldBase = "http://diglib.princeton.edu/images/deliverable/";
-		String id = uri.replace(oldBase, "");
-		id = id.replace("\\.mets$", "");
-		id = id.replace("/", "%2F");
-		return id;
-	}
-	
-	
-
-	/*
-	 * 
-	 */
-	// TODO: make a property
-	private static String delivUriPath(String uri) {
-
-		String oldBase = "http://diglib.princeton.edu/images/deliverable/";
-		String newBase = imagesHome.endsWith("/") ? imagesHome : imagesHome + "/";
+	private static String delivUriUrn(String uri) {
+		String oldBase = "http://diglib.princeton.edu/images/master/";
+		String newBase = "file://" + imagesHome;
+		newBase = imagesHome.endsWith("/") ? newBase : newBase + "/";
 		return uri.replace(oldBase, newBase);
 	}
+
 
 	private static String getCollectionId(String aggBy) {
 	    int begin = "http://diglib.princeton.edu/mdata/".length();
