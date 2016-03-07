@@ -1,9 +1,3 @@
-/**
- * PUDLMETSEntity.java <br/>
- * $LastChangedDate$ <br/>
- * $Author$ <br/>
- * $Rev$
- */
 package edu.princeton.diglib.md.metsCompiler.db;
 
 import com.sleepycat.persist.model.Entity;

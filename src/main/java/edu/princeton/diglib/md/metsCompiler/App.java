@@ -1,9 +1,3 @@
-/**
- * App.java <br/>
- * $LastChangedDate$ <br/>
- * $Author$ <br/>
- * $Rev$
- */
 package edu.princeton.diglib.md.metsCompiler;
 
 import java.io.BufferedReader;
@@ -81,12 +75,10 @@ public class App {
 	private static String[] pudlNos;
 	private static String imageMetsRoot;
 	private static String objectsRoot;
-	private static String textsRoot;
 	private static String imageMetsDir;
 	private static String singleObjectMETS;
 	private static String singleDMD;
 	private static String dbenvDir;
-	private static String singleText;
 
 	public static void main(String[] args) throws TransformerException {
 
@@ -232,12 +224,10 @@ public class App {
 			pudlNos = localProps.getProperty("App.pudlNos").split(",\\s*");
 			imageMetsRoot = localProps.getProperty("App.imageMetsRoot");
 			objectsRoot = localProps.getProperty("App.objectsRoot");
-			textsRoot = localProps.getProperty("App.textsRoot");
 
 			imageMetsDir = localProps.getProperty("App.imageMetsDir");
 			singleObjectMETS = localProps.getProperty("App.singleObjectMETS");
 			singleDMD = localProps.getProperty("App.singleDMD");
-			singleText = localProps.getProperty("App.singleText");
 
 			dbenvDir = localProps.getProperty("App.dbenvDir");
 
@@ -270,13 +260,11 @@ public class App {
 				pudlNo = pudlNo.trim();
 				toLoad.add(new File(imageMetsRoot, pudlNo));
 				toLoad.add(new File(objectsRoot, pudlNo));
-				toLoad.add(new File(textsRoot, pudlNo));
 			}
 		} else { // SINGLE
 			toLoad.add(new File(imageMetsDir));
 			toLoad.add(new File(singleObjectMETS));
 			toLoad.add(new File(singleDMD));
-			toLoad.add(new File(singleText));
 		}
 
 		for (File node : toLoad) {
@@ -403,8 +391,7 @@ public class App {
 
 	private static Mode determineMode() {
 		Mode mode;
-		if (imageMetsDir != null && singleObjectMETS != null
-				&& singleDMD != null && singleText != null)
+		if (imageMetsDir != null && singleObjectMETS != null && singleDMD != null)
 			mode = Mode.SINGLE_OBJECT;
 		else
 			mode = Mode.MULTIPLE_OBJECTS;
@@ -412,11 +399,6 @@ public class App {
 		return mode;
 	}
 
-	/**
-	 * @author <a href="mailto:jstroop@princeton.edu">Jon Stroop</a>
-	 * @since Mar 1, 2011
-	 * 
-	 */
 	public enum Mode {
 		SINGLE_OBJECT("single object"), MULTIPLE_OBJECTS("multiple objects");
 

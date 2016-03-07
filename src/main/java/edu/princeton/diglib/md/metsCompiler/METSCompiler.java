@@ -1,9 +1,3 @@
-/**
- * METSCompiler.java <br/>
- * $LastChangedDate$ <br/>
- * $Author$ <br/>
- * $Rev$
- */
 package edu.princeton.diglib.md.metsCompiler;
 
 import java.io.FileInputStream;

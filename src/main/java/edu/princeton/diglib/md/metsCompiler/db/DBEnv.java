@@ -1,9 +1,3 @@
-/**
- * DBEnv.java <br/>
- * $LastChangedDate$ <br/>
- * $Author$ <br/>
- * $Rev$
- */
 package edu.princeton.diglib.md.metsCompiler.db;
 
 import java.io.File;
@@ -16,11 +10,6 @@ import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.persist.EntityStore;
 import com.sleepycat.persist.StoreConfig;
-
-/**
- * @author <a href="mailto:jstroop@princeton.edu">Jon Stroop</a>
- * @since Tuesday, Sep 14 2010
- */
 
 public class DBEnv {
 

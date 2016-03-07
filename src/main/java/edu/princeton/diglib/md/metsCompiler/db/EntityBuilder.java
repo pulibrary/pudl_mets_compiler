@@ -15,9 +15,8 @@ import edu.princeton.diglib.md.NS;
 import edu.princeton.diglib.md.metsCompiler.db.PUDLMETSEntity.TYPE;
 
 /**
- * <p>
- * Class for extracting URIs for XML documents in the PUDL. Optimized for speed.
- * <p>
+ *  * Class for extracting URIs for XML documents in the PUDL. Optimized for speed.
+ * 
  * To use, create in instance and call the {@link #extract(File)} method
  * repeatedly, i.e.:
  * 
@@ -33,7 +32,7 @@ import edu.princeton.diglib.md.metsCompiler.db.PUDLMETSEntity.TYPE;
  * 
  */
 /*
- * This is complicated code, but it's built for speed, not looks :)
+ * This is complicated, but it's built for speed, not looks :)
  */
 public class EntityBuilder {
     private static XMLInputFactory2 xmlif;

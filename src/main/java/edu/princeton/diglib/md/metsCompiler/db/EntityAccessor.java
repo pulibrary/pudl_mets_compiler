@@ -13,13 +13,6 @@ import com.sleepycat.persist.SecondaryIndex;
 
 import edu.princeton.diglib.md.metsCompiler.db.PUDLMETSEntity.TYPE;
 
-/**
- * @author <a href="mailto:jstroop@princeton.edu">Jon Stroop</a>
- * @since Sep 14, 2010
- */
-
-// TODO: add methods for putting and getting
-
 public class EntityAccessor {
 	private PrimaryIndex<String, PUDLMETSEntity> uriIndex;
 	private SecondaryIndex<TYPE, String, PUDLMETSEntity> typeIndex;
