@@ -23,6 +23,8 @@ import edu.princeton.diglib.md.mets.FileSec.FileGrp.File;
 import edu.princeton.diglib.md.mets.FileSec.FileGrp.File.FLocat;
 import edu.princeton.diglib.md.mets.LocatorElement.LOCTYPE;
 import edu.princeton.diglib.md.mets.MdSec;
+import edu.princeton.diglib.md.mets.MdSec.MDTYPE;
+import edu.princeton.diglib.md.mets.MdSec.MdRef;
 import edu.princeton.diglib.md.mets.MdSec.MdWrap;
 import edu.princeton.diglib.md.mets.Mets;
 import edu.princeton.diglib.md.mets.MetsHdr;
@@ -147,8 +149,7 @@ public class METSCompiler {
 		cHdr.setCREATEDATE(sHdr.getCREATEDATE());
 		String docId = sHdr.getAltRecordID().get(0).getIdentifier();
 		docId = docId.replace("http://diglib.princeton.edu/mdata/", "");
-		
-//		cHdr.setMetsDocumentID(sHdr.getAltRecordID().get(0));
+
 		MetsHdr.RecordID rid = new MetsHdr.RecordID(docId);
 		rid.setType("PUDL");
 		cHdr.setMetsDocumentID(rid);
@@ -162,10 +163,6 @@ public class METSCompiler {
 	 * @throws MissingRecordException
 	 */
 
-	// this is OK as a test, but we're going to need to do as part of the
-	// structMap, so that we can keep track of the ID
-	// maybe we call this function for each DMDID we run accross? (with the ID
-	// as an arg?)
 	private static void doDmdSec(Mets src, Mets cmp) throws SAXException, IOException, MissingRecordException {
 
 		for (MdSec dmdSec : src.getDmdSec()) { // assumes there's an mdRef and
@@ -176,31 +173,43 @@ public class METSCompiler {
 				idMap.put(oldId, newId);
 
 				String mdataUri = dmdSec.getMdRef().getXlinkHREF();
-				MdSec.MDTYPE mdtype = dmdSec.getMdRef().getMDTYPE();
+				MdSec bibDataSec = new MdSec(newId);
+				MdRef bibDataRef = new MdRef(LOCTYPE.URL, MDTYPE.MARC);
+				bibDataSec.setMdRef(bibDataRef);
+				
+//				MdSec.MDTYPE mdtype = dmdSec.getMdRef().getMDTYPE();
 
 				try {// db
 					String path = accessor.getUriIndex().get(mdataUri).getPath();
 					Document doc = metsReader.getDocBuilder().parse(path);
 					Element root = doc.getDocumentElement();
-
-					MdSec cmpDmdSec = new MdSec(newId);
-					MdWrap wrap = new MdWrap(mdtype);
-					wrap.getXmlData().add(root);
-					cmpDmdSec.setMdWrap(wrap);
-
-					cmp.getDmdSec().add(cmpDmdSec);
-
+					bibDataRef.setXlinkHREF(voyagerIdFromMODS(root));
+					//make an mdref
+					
 				} catch (NullPointerException e) {
 					MetsHdr srcHdr = src.getMetsHdr();
 					String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
 					String msg = "Could not retrieve " + mdataUri + " from the database. Skipping " + srcUri;
 					throw new MissingRecordException(msg);
 				}
+				
+				cmp.getDmdSec().add(bibDataSec);
 			}
 		}
 	}
 
 
+	private static String voyagerIdFromMODS(Element root) {
+		Element recordInfo = (Element) root.getElementsByTagName("recordInfo").item(0);
+		Element recordOrigin = (Element) recordInfo.getElementsByTagName("recordOrigin").item(0);
+		
+		String voyagerUrl = recordOrigin.getTextContent();
+		// these should be constants
+		String bibBase = "https://bibdata.princeton.edu/bibliographic/";
+		String voyagerBase = "http://catalog.princeton.edu/cgi-bin/Pwebrecon.cgi?BBID=";
+		return voyagerUrl.replace(voyagerBase, bibBase);
+		
+	}
 
 	private static void doStructMaps(Mets src, Mets cmp) throws MissingRecordException, FileNotFoundException,
 			SAXException, ParseException, IOException {
