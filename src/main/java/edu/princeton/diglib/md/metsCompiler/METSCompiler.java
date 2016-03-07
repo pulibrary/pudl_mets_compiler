@@ -30,7 +30,6 @@ import edu.princeton.diglib.md.mets.FileSec.FileGrp;
 import edu.princeton.diglib.md.mets.FileSec.FileGrp.File;
 import edu.princeton.diglib.md.mets.FileSec.FileGrp.File.FLocat;
 import edu.princeton.diglib.md.mets.LocatorElement.LOCTYPE;
-import edu.princeton.diglib.md.mets.MdSec.MDTYPE;
 import edu.princeton.diglib.md.mets.MdSec.MdWrap;
 import edu.princeton.diglib.md.mets.StructMap.Div;
 import edu.princeton.diglib.md.mets.StructMap.Div.Fptr;
@@ -104,6 +103,19 @@ public class METSCompiler {
 
 	}
 
+	/*
+	 * TODO: 
+	 *  * ARK (not just NOID) in objid : ark:/88435/
+	 *  * Checksums 
+	 *     * calc SHA1
+	 *     * check
+	 *     * add to <file>
+	 *  * RecordID from MODS
+	 *  * Fix thumbnail
+	 *  * URIs to /mnt paths
+	 * 
+	 */
+			
 	private static void compile(Mets srcMets, Mets cmpMets) throws SAXException, IOException, MissingRecordException,
 			ParseException {
 		idgen.reset();
@@ -111,9 +123,9 @@ public class METSCompiler {
 		admidMap.clear();
 		cmpMets.setFileSec(new FileSec());// No fileSec by default
 		doRoot(srcMets, cmpMets);
-		doHeader(srcMets, cmpMets);
+//		doHeader(srcMets, cmpMets);
 		doDmdSec(srcMets, cmpMets);
-		doAmdSec(srcMets, cmpMets);
+//		 doAmdSec(srcMets, cmpMets);
 		doFileSecThumb(srcMets, cmpMets);
 		doStructMaps(srcMets, cmpMets);
 		doStructLink(srcMets, cmpMets);
@@ -189,84 +201,7 @@ public class METSCompiler {
 		}
 	}
 
-	/**
-	 * Important - call this BEFORE {@link #doStructMaps(Mets, Mets)}. It
-	 * populates our {@link #admidMap}. Not ideal, but we're in a hurry.
-	 * 
-	 * @param src
-	 * @param cmp
-	 * @throws MissingRecordException
-	 */
-	private static void doAmdSec(Mets src, Mets cmp) throws MissingRecordException {
-		List<Div> aggregatesDivs = null;
-		// TODO: should be do / while loops
-		for (StructMap smap : src.getStructMap()) {
-			if (smap.getType().equals("RelatedObjects")) {
-				Div rootDiv = smap.getDiv();
-				for (Div div : rootDiv.getDiv()) {
-					if (div.getID().equals("aggregates")) {
-						aggregatesDivs = div.getDiv();
-					}
-				}
-			}
-		}
 
-		AmdSec amdSec = new AmdSec();
-		cmp.getAmdSec().add(amdSec);
-
-		for (Div div : aggregatesDivs) {
-			if (!div.getType().equals("AggregatedObject") || div.getType() == null) {
-				String mptrUri = div.getMptr().get(0).getXlinkHREF();
-
-				try {
-					String path;
-
-					// NPE gets thrown here if we can't find the record
-					path = accessor.getUriIndex().get(mptrUri).getPath();
-
-					Mets iMets;
-					iMets = metsReader.read(new FileInputStream(path));
-					FileGrp fileGrp;
-					fileGrp = iMets.getFileSec().getFileGrp().get(0);
-					for (File file : fileGrp.getFile()) {
-						if (file.getUse().equals("deliverable")) {
-
-							// check if the URI is in our lookup, if not, mint
-							// new
-							String admid = admidMap.get(mptrUri);
-
-							if (admid == null) { // then we haven't worked on
-													// this
-								// one yet
-								admid = idgen.mint();
-								admidMap.put(mptrUri, admid);
-							}
-
-//							// FLocat
-//							FLocat fcat = file.getFLocat().get(0);
-//							// href
-//							String url = fcat.getXlinkHREF();
-//							java.io.File imgFile;
-//							imgFile = new java.io.File(delivUriPath(url));
-//							Element mix = JpxDataExtractor.extractDimensionsAsMix(imgFile);
-//							MdSec techMd = new MdSec(admid);
-//							MdWrap wrap = new MdWrap(MDTYPE.NISOIMG);
-//							techMd.setMdWrap(wrap);
-//							wrap.getXmlData().add(mix);
-//							amdSec.getTechMD().add(techMd);
-						}
-					}
-				} catch (Exception e) {
-					MetsHdr srcHdr = src.getMetsHdr();
-					String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
-					String msg = "Could not retrieve technical metadata for " + mptrUri + ". Skipping " + srcUri;
-					String cause = "Cause: " + e.getMessage();
-					throw new MissingRecordException(msg + System.getProperty("line.separator") + cause);
-				}
-
-			}
-		}
-	}
 
 	private static void doStructMaps(Mets src, Mets cmp) throws MissingRecordException, FileNotFoundException,
 			SAXException, ParseException, IOException {
@@ -275,7 +210,7 @@ public class METSCompiler {
 
 		// Set up the fileGrp for the devliverable images
 		FileGrp fileGrp = new FileGrp();
-		fileGrp.setUse("deliverables");
+		fileGrp.setUse("masters");
 		cmp.getFileSec().getFileGrp().add(1, fileGrp);
 
 		for (StructMap srcSmap : src.getStructMap()) {
@@ -327,18 +262,6 @@ public class METSCompiler {
 						for (String contentId : srcDiv.getCONTENTIDS()) {
 							cmpDiv.getCONTENTIDS().add(contentId);
 						}
-						// // TODO: potentially. We might need to go into the
-						// Object
-						// // METS, pull in its image METS and have those
-						// represented here.
-						//
-						// String path;
-						// path = accessor.getUriIndex().get(mptrUri).getPath();
-						//
-						// Mets oMets;
-						// oMets = metsReader.read(new FileInputStream(path));
-						// String contentId = oMets.getOBJID();
-						// cmpDiv.getCONTENTIDS().add(contentId);
 
 					} catch (NullPointerException e) {
 						MetsHdr srcHdr = src.getMetsHdr();
@@ -389,8 +312,9 @@ public class METSCompiler {
 							iMets = metsReader.read(new FileInputStream(path));
 							FileGrp fileGrp;
 							fileGrp = iMets.getFileSec().getFileGrp().get(0);
+							// TODO: make this the archival files instead
 							for (File file : fileGrp.getFile()) {
-								if (file.getUse().equals("deliverable")) {
+								if (file.getUse().equals("master")) {
 									// ID
 									file.setID(fileId);
 									file.setUse(null);
@@ -455,7 +379,7 @@ public class METSCompiler {
 	private static void doFileSecThumb(Mets src, Mets cmp) {
 		FileGrp grp = src.getFileSec().getFileGrp().get(0);
 		for (File file : grp.getFile()) {
-			if (file.getUse().equals("deliverable")) {
+			if (file.getUse().equals("master")) {
 				file.setUse(null);
 				file.setID(idgen.mint());
 				FileGrp newGrp = new FileGrp();
