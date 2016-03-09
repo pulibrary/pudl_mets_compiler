@@ -15,8 +15,11 @@ import javax.xml.transform.TransformerException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import edu.princeton.diglib.md.mets.AmdSec;
 import edu.princeton.diglib.md.mets.FileSec;
 import edu.princeton.diglib.md.mets.FileSec.FileGrp;
 import edu.princeton.diglib.md.mets.FileSec.FileGrp.File;
@@ -25,17 +28,25 @@ import edu.princeton.diglib.md.mets.LocatorElement.LOCTYPE;
 import edu.princeton.diglib.md.mets.MdSec;
 import edu.princeton.diglib.md.mets.MdSec.MDTYPE;
 import edu.princeton.diglib.md.mets.MdSec.MdRef;
-import edu.princeton.diglib.md.mets.MdSec.MdWrap;
 import edu.princeton.diglib.md.mets.Mets;
 import edu.princeton.diglib.md.mets.MetsHdr;
 import edu.princeton.diglib.md.mets.MetsReader;
 import edu.princeton.diglib.md.mets.MetsWriter;
+import edu.princeton.diglib.md.mets.SharedEnums.CHECKSUMTYPE;
 import edu.princeton.diglib.md.mets.StructMap;
 import edu.princeton.diglib.md.mets.StructMap.Div;
 import edu.princeton.diglib.md.mets.StructMap.Div.Fptr;
 import edu.princeton.diglib.md.mets.StructMap.Div.Mptr;
 import edu.princeton.diglib.md.metsCompiler.db.EntityAccessor;
 import edu.princeton.diglib.md.utils.IDGen;
+
+/*
+ * TODO: 
+ *  * Checksums 
+ *     * calc SHA1
+ *     * check
+ *     * add to <file>
+ */
 
 /**
  * @author <a href="mailto:jstroop@princeton.edu">Jon Stroop</a>
@@ -84,7 +95,6 @@ public class METSCompiler {
 		try {
 			metsWriter.writeToFile(cmpMets, file);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -101,18 +111,6 @@ public class METSCompiler {
 
 	}
 
-	/*
-	 * TODO: 
-	 *  * ARK (not just NOID) in objid : ark:/88435/
-	 *  * Checksums 
-	 *     * calc SHA1
-	 *     * check
-	 *     * add to <file>
-	 *  * RecordID from MODS
-	 *  * Fix thumbnail
-	 *  * URIs to /mnt paths
-	 * 
-	 */
 			
 	private static void compile(Mets srcMets, Mets cmpMets) throws SAXException, IOException, MissingRecordException,
 			ParseException {
@@ -176,10 +174,8 @@ public class METSCompiler {
 				MdSec bibDataSec = new MdSec(newId);
 				MdRef bibDataRef = new MdRef(LOCTYPE.URL, MDTYPE.MARC);
 				bibDataSec.setMdRef(bibDataRef);
-				
-//				MdSec.MDTYPE mdtype = dmdSec.getMdRef().getMDTYPE();
 
-				try {// db
+				try {
 					String path = accessor.getUriIndex().get(mdataUri).getPath();
 					Document doc = metsReader.getDocBuilder().parse(path);
 					Element root = doc.getDocumentElement();
@@ -309,12 +305,16 @@ public class METSCompiler {
 							iMets = metsReader.read(new FileInputStream(path));
 							FileGrp fileGrp;
 							fileGrp = iMets.getFileSec().getFileGrp().get(0);
-							// TODO: make this the archival files instead
 							for (File file : fileGrp.getFile()) {
 								if (file.getUse().equals("master")) {
 									// ID
 									file.setID(fileId);
 									file.setUse(null);
+									
+									// checksum
+									file.setCHECKSUMTYPE(CHECKSUMTYPE.SHA_1);
+									file.setCHECKSUM(getSha1(iMets));
+
 									// FLocat
 									FLocat fcat = file.getFLocat().get(0);
 									// href
@@ -322,7 +322,8 @@ public class METSCompiler {
 									
 									fcat.setXlinkHREF(delivUriUrn(url));
 									fcat.setLOCTYPE(LOCTYPE.URL);
-
+									
+									
 									cmp.getFileSec().getFileGrp().get(1).getFile().add(file);
 								}
 							}
@@ -360,12 +361,43 @@ public class METSCompiler {
 				newChildDiv.getCONTENTIDS().add(coll);
 
 			}
-
-			// TODO: collection identifier
 		}
 	}
 
-	// TODO: throw something if we there is no fileGrp
+	private static String getSha1(Mets iMets) {
+		String sum = null;
+		for (AmdSec amd : iMets.getAmdSec()) {
+			if (amd.getID().equals("master.image.amd")) {
+				Element premis = amd.getTechMD().get(0).getMdWrap().getXmlData().get(0);
+				NodeList fixities = premis.getElementsByTagName("premis:fixity");
+				sum = getShaFromPremisFixityList(fixities);
+			}
+		}
+		return sum;		
+	}
+	
+	private static String getShaFromPremisFixityList(NodeList fixities) {
+		String sha1 = null;
+		
+		for (int i = 0; i < fixities.getLength(); i++) {
+			Element fixity = (Element) fixities.item(i);
+			if (algoFromFixity(fixity).equals("SHA-1")){
+				sha1 = valueFromFixity(fixity);	
+			}
+		}
+		return sha1;
+	}
+	
+	private static String algoFromFixity(Element fixity) {
+		Node e = fixity.getElementsByTagName("premis:messageDigestAlgorithm").item(0);
+		return e.getTextContent();
+	}
+	
+	private static String valueFromFixity(Element fixity) {
+		Node e = fixity.getElementsByTagName("premis:messageDigest").item(0);
+		return e.getTextContent();
+	}
+
 	private static void doFileSecThumb(Mets src, Mets cmp) {
 		FileGrp grp = src.getFileSec().getFileGrp().get(0);
 		for (File file : grp.getFile()) {
