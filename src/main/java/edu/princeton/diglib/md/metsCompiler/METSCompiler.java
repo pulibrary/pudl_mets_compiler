@@ -28,6 +28,7 @@ import edu.princeton.diglib.md.mets.LocatorElement.LOCTYPE;
 import edu.princeton.diglib.md.mets.MdSec;
 import edu.princeton.diglib.md.mets.MdSec.MDTYPE;
 import edu.princeton.diglib.md.mets.MdSec.MdRef;
+import edu.princeton.diglib.md.mets.MdSec.MdWrap;
 import edu.princeton.diglib.md.mets.Mets;
 import edu.princeton.diglib.md.mets.MetsHdr;
 import edu.princeton.diglib.md.mets.MetsReader;
@@ -40,18 +41,6 @@ import edu.princeton.diglib.md.mets.StructMap.Div.Mptr;
 import edu.princeton.diglib.md.metsCompiler.db.EntityAccessor;
 import edu.princeton.diglib.md.utils.IDGen;
 
-/*
- * TODO: 
- *  * Checksums 
- *     * calc SHA1
- *     * check
- *     * add to <file>
- */
-
-/**
- * @author <a href="mailto:jstroop@princeton.edu">Jon Stroop</a>
- * @since Sep 15, 2010
- */
 public class METSCompiler {
 
 	// static?
@@ -120,6 +109,7 @@ public class METSCompiler {
 		doRoot(srcMets, cmpMets);
 		doHeader(srcMets, cmpMets);
 		doDmdSec(srcMets, cmpMets);
+		doMODSDmdSec(srcMets, cmpMets);
 		doFileSecThumb(srcMets, cmpMets);
 		doStructMaps(srcMets, cmpMets);
 		doStructLink(srcMets, cmpMets);
@@ -153,14 +143,6 @@ public class METSCompiler {
 		cHdr.setMetsDocumentID(rid);
 	}
 
-	/**
-	 * @param srcMets
-	 * @param cmpMets
-	 * @throws IOException
-	 * @throws SAXException
-	 * @throws MissingRecordException
-	 */
-
 	private static void doDmdSec(Mets src, Mets cmp) throws SAXException, IOException, MissingRecordException {
 
 		for (MdSec dmdSec : src.getDmdSec()) { // assumes there's an mdRef and
@@ -182,6 +164,7 @@ public class METSCompiler {
 					bibDataRef.setXlinkHREF(voyagerIdFromMODS(root));
 					//make an mdref
 					
+					
 				} catch (NullPointerException e) {
 					MetsHdr srcHdr = src.getMetsHdr();
 					String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
@@ -193,18 +176,51 @@ public class METSCompiler {
 			}
 		}
 	}
+	
+	
+	private static void doMODSDmdSec(Mets src, Mets cmp) throws SAXException, IOException, MissingRecordException {
 
+		for (MdSec dmdSec : src.getDmdSec()) { // assumes there's an mdRef and
+			// not an mdWrap
+			if (dmdSec.getMdRef() != null) {
+				String oldId = dmdSec.getID();
+				String newId = idgen.mint();
+				idMap.put(oldId, newId);
+
+				String mdataUri = dmdSec.getMdRef().getXlinkHREF();
+				MdSec.MDTYPE mdtype = dmdSec.getMdRef().getMDTYPE();
+
+				try {// db
+					String path = accessor.getUriIndex().get(mdataUri).getPath();
+					Document doc = metsReader.getDocBuilder().parse(path);
+					Element root = doc.getDocumentElement();
+
+					MdSec cmpDmdSec = new MdSec(newId);
+					MdWrap wrap = new MdWrap(mdtype);
+					wrap.getXmlData().add(root);
+					cmpDmdSec.setMdWrap(wrap);
+
+					cmp.getDmdSec().add(cmpDmdSec);
+
+				} catch (NullPointerException e) {
+					MetsHdr srcHdr = src.getMetsHdr();
+					String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
+					String msg = "Could not retrieve " + mdataUri + " from the database. Skipping " + srcUri;
+					throw new MissingRecordException(msg);
+				}
+			}
+		}
+	}
+	
 
 	private static String voyagerIdFromMODS(Element root) {
 		Element recordInfo = (Element) root.getElementsByTagName("recordInfo").item(0);
 		Element recordOrigin = (Element) recordInfo.getElementsByTagName("recordOrigin").item(0);
-		
 		String voyagerUrl = recordOrigin.getTextContent();
 		// these should be constants
 		String bibBase = "https://bibdata.princeton.edu/bibliographic/";
 		String voyagerBase = "http://catalog.princeton.edu/cgi-bin/Pwebrecon.cgi?BBID=";
 		return voyagerUrl.replace(voyagerBase, bibBase);
-		
 	}
 
 	private static void doStructMaps(Mets src, Mets cmp) throws MissingRecordException, FileNotFoundException,
@@ -236,9 +252,14 @@ public class METSCompiler {
 			FileNotFoundException, SAXException, ParseException, IOException {
 
 		if (!srcDiv.getDMDID().isEmpty()) {
+			// Add the ID for our new bibdata ID
+			cmpDiv.getDMDID().add(cmp.getDmdSec().get(0).getID());
+			
+			// and also the one from the MODS
 			String srcId = srcDiv.getDMDID().get(0); // assuming one for now
 			String cmpId = idMap.get(srcId); // error handling?
 			cmpDiv.getDMDID().add(cmpId);
+			
 		}
 
 		if (srcDiv.getLabel() != null)
