@@ -9,10 +9,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
+import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -49,6 +51,7 @@ public class METSCompiler {
 	private static EntityAccessor accessor;
 	private static IDGen idgen;
 	private static boolean opaquifyOBJID;
+	private static Logger appLog;
 
 	private static Map<String, String> idMap;
 
@@ -61,10 +64,11 @@ public class METSCompiler {
 	 * @throws DatatypeConfigurationException
 	 * @throws ParserConfigurationException
 	 */
-	public METSCompiler(EntityAccessor accessor, String outURL, boolean opaquify) throws ParserConfigurationException,
+	public METSCompiler(EntityAccessor accessor, String outURL, Logger appLog, boolean opaquify) throws ParserConfigurationException,
 			DatatypeConfigurationException {
 		metsReader = new MetsReader();
 		metsWriter = new MetsWriter();
+		METSCompiler.appLog = appLog;
 		METSCompiler.accessor = accessor;
 		opaquifyOBJID = opaquify;
 		idgen = new IDGen(5);
@@ -157,7 +161,7 @@ public class METSCompiler {
 				MdRef bibDataRef = new MdRef(LOCTYPE.URL, MDTYPE.MARC);
 				bibDataSec.setMdRef(bibDataRef);
 
-				try {
+//				try {
 					String path = accessor.getUriIndex().get(mdataUri).getPath();
 					Document doc = metsReader.getDocBuilder().parse(path);
 					Element root = doc.getDocumentElement();
@@ -165,12 +169,13 @@ public class METSCompiler {
 					//make an mdref
 					
 					
-				} catch (NullPointerException e) {
-					MetsHdr srcHdr = src.getMetsHdr();
-					String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
-					String msg = "Could not retrieve " + mdataUri + " from the database. Skipping " + srcUri;
-					throw new MissingRecordException(msg);
-				}
+//				}
+//				catch (NullPointerException e) {
+//					MetsHdr srcHdr = src.getMetsHdr();
+//					String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
+//					String msg = "Could not retrieve " + mdataUri + " from the database. Skipping " + srcUri;
+//					throw new MissingRecordException(msg);
+//				}
 				
 				cmp.getDmdSec().add(bibDataSec);
 			}
@@ -214,14 +219,32 @@ public class METSCompiler {
 	
 
 	private static String voyagerIdFromMODS(Element root) {
-		Element recordInfo = (Element) root.getElementsByTagName("recordInfo").item(0);
-		Element recordOrigin = (Element) recordInfo.getElementsByTagName("recordOrigin").item(0);
-		String voyagerUrl = recordOrigin.getTextContent();
+		Element recordInfo = getModsFirstChildElement(root, "recordInfo");
+		Element recordOrigin = null;
+		String voyagerUrl = null;
+		try {
+			recordOrigin = getModsFirstChildElement(recordInfo, "recordOrigin");
+			voyagerUrl = recordOrigin.getTextContent();
+		} catch (NullPointerException e) {
+			String recordIdentifier = getModsFirstChildElement(recordInfo, "recordIdentifier").getTextContent();
+			appLog.error(recordIdentifier + " lacks a BIB ID");
+			return "";
+		}
+		
 		// these should be constants
 		String bibBase = "https://bibdata.princeton.edu/bibliographic/";
 		String voyagerBase = "http://catalog.princeton.edu/cgi-bin/Pwebrecon.cgi?BBID=";
 		return voyagerUrl.replace(voyagerBase, bibBase);
 	}
+	
+	private static Element getModsFirstChildElement(Element elem, String name) {
+		NodeList children = null;
+		children = elem.getElementsByTagName(name);
+		if (children.getLength() == 0) { 
+			children = elem.getElementsByTagNameNS("http://www.loc.gov/mods/v3", name);
+		}
+		return (Element) children.item(0);
+	};
 
 	private static void doStructMaps(Mets src, Mets cmp) throws MissingRecordException, FileNotFoundException,
 			SAXException, ParseException, IOException {

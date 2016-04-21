@@ -312,7 +312,7 @@ public class App {
 			ParseException, TransformerException {
 		METSCompiler compiler = null;
 
-		compiler = new METSCompiler(accessor, output, true);
+		compiler = new METSCompiler(accessor, output, appLog, true);
 
 		EntityCursor<PUDLMETSEntity> cursor;
 		cursor = accessor.getTypeIndex().subIndex(TYPE.OBJECT).entities();
