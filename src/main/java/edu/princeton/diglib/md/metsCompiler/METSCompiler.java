@@ -161,21 +161,11 @@ public class METSCompiler {
 				MdRef bibDataRef = new MdRef(LOCTYPE.URL, MDTYPE.MARC);
 				bibDataSec.setMdRef(bibDataRef);
 
-//				try {
-					String path = accessor.getUriIndex().get(mdataUri).getPath();
-					Document doc = metsReader.getDocBuilder().parse(path);
-					Element root = doc.getDocumentElement();
-					bibDataRef.setXlinkHREF(voyagerIdFromMODS(root));
-					//make an mdref
+				String path = accessor.getUriIndex().get(mdataUri).getPath();
+				Document doc = metsReader.getDocBuilder().parse(path);
+				Element root = doc.getDocumentElement();
+				bibDataRef.setXlinkHREF(voyagerIdFromMODS(root));
 					
-					
-//				}
-//				catch (NullPointerException e) {
-//					MetsHdr srcHdr = src.getMetsHdr();
-//					String srcUri = srcHdr.getAltRecordID().get(0).getIdentifier();
-//					String msg = "Could not retrieve " + mdataUri + " from the database. Skipping " + srcUri;
-//					throw new MissingRecordException(msg);
-//				}
 				
 				cmp.getDmdSec().add(bibDataSec);
 			}
