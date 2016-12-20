@@ -346,8 +346,8 @@ public class METSCompiler {
 									file.setUse(null);
 									
 									// checksum
-									file.setCHECKSUMTYPE(CHECKSUMTYPE.SHA_1);
-									file.setCHECKSUM(getSha1(iMets));
+									file.setCHECKSUMTYPE(CHECKSUMTYPE.MD_5);
+									file.setCHECKSUM(getMD5(iMets));
 
 									// FLocat
 									FLocat fcat = file.getFLocat().get(0);
@@ -398,24 +398,24 @@ public class METSCompiler {
 		}
 	}
 
-	private static String getSha1(Mets iMets) {
+	private static String getMD5(Mets iMets) {
 		String sum = null;
 		for (AmdSec amd : iMets.getAmdSec()) {
 			if (amd.getID().equals("master.image.amd")) {
 				Element premis = amd.getTechMD().get(0).getMdWrap().getXmlData().get(0);
 				NodeList fixities = premis.getElementsByTagName("premis:fixity");
-				sum = getShaFromPremisFixityList(fixities);
+				sum = getMD5FromPremisFixityList(fixities);
 			}
 		}
 		return sum;		
 	}
 	
-	private static String getShaFromPremisFixityList(NodeList fixities) {
+	private static String getMD5FromPremisFixityList(NodeList fixities) {
 		String sha1 = null;
 		
 		for (int i = 0; i < fixities.getLength(); i++) {
 			Element fixity = (Element) fixities.item(i);
-			if (algoFromFixity(fixity).equals("SHA-1")){
+			if (algoFromFixity(fixity).equals("MD5")){
 				sha1 = valueFromFixity(fixity);	
 			}
 		}
