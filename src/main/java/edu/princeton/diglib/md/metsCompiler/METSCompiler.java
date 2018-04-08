@@ -9,17 +9,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import edu.princeton.diglib.md.mets.AmdSec;
 import edu.princeton.diglib.md.mets.FileSec;
@@ -44,6 +46,7 @@ import edu.princeton.diglib.md.metsCompiler.db.EntityAccessor;
 import edu.princeton.diglib.md.utils.IDGen;
 
 public class METSCompiler {
+	private static final String GA_VOYAGER_MAP = "/Users/jstroop/workspace/pudl_mets_compiler/vis_voy_mapping.json";
 
 	// static?
 	private static MetsReader metsReader;
@@ -54,6 +57,7 @@ public class METSCompiler {
 	private static Logger appLog;
 
 	private static Map<String, String> idMap;
+	private static Map<String, String> vraMap;
 
 	private static String imagesHome;
 
@@ -99,11 +103,9 @@ public class METSCompiler {
 		Mets cmpMets = new Mets();
 
 		compile(srcMets, cmpMets);
-
+		
 		metsWriter.writeToOutputStream(cmpMets, out);
-
 	}
-
 			
 	private static void compile(Mets srcMets, Mets cmpMets) throws SAXException, IOException, MissingRecordException,
 			ParseException {
@@ -164,9 +166,12 @@ public class METSCompiler {
 				String path = accessor.getUriIndex().get(mdataUri).getPath();
 				Document doc = metsReader.getDocBuilder().parse(path);
 				Element root = doc.getDocumentElement();
-				bibDataRef.setXlinkHREF(voyagerIdFromMODS(root));
-					
-				
+				if (root.getLocalName() == "mods") {
+					bibDataRef.setXlinkHREF(voyagerIdFromMODS(root));
+				} else {
+					bibDataRef.setXlinkHREF(voyagerIdForVRA(root));
+				}
+
 				cmp.getDmdSec().add(bibDataSec);
 			}
 		}
@@ -207,6 +212,60 @@ public class METSCompiler {
 		}
 	}
 	
+	
+	private static String voyagerIdForVRA(Element root) {
+		Element collection = null; 
+		Element work = null;
+		String refid = null;
+		String voyId = null;
+		collection = getVraFirstChildElement(root, "collection");
+		if (collection == null) {
+			work = getVraFirstChildElement(root, "work");
+		} else {
+			work = getVraFirstChildElement(collection, "work");
+		}
+		refid = work.getAttribute("refid");	
+		voyId = gaURIToVoyId(refid);
+		if (voyId == null) {
+			appLog.error(refid + " lacks a BIB ID");
+			throw new NullPointerException();
+		} else {
+			String bibBase = "https://bibdata.princeton.edu/bibliographic/";
+			return bibBase + voyId;
+		}
+	}
+	
+	private static String gaURIToVoyId(String gaURI) {
+		if (vraMap == null) {
+			try {
+				initVraMap();
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+		}
+
+		String gaId = gaURI.replace("http://diglib.princeton.edu/mdata/", "")
+			.replace(".vra", "")
+			.replace("/", ".")
+			.replaceAll("pudl\\d{4}.", "")
+			.replace("ga.", "");
+		String[] split = gaId.split("\\.");
+		String year = split[0];
+		String acq = StringUtils.leftPad(split[1], 5, '0');
+		gaId = year + "." + acq;
+		return vraMap.get(gaId);
+	}
+	
+	
+	private static Element getVraFirstChildElement(Element elem, String name) {
+		NodeList children = null;
+		children = elem.getElementsByTagName(name);
+		if (children.getLength() == 0) { 
+			children = elem.getElementsByTagNameNS("http://www.vraweb.org/vracore4.htm", name);
+		}
+		return (Element) children.item(0);
+	};
 
 	private static String voyagerIdFromMODS(Element root) {
 		Element recordInfo = getModsFirstChildElement(root, "recordInfo");
@@ -458,6 +517,12 @@ public class METSCompiler {
 		if (src.getStructLink() != null) {
 			cmp.setStructLink(src.getStructLink());
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void initVraMap() throws IOException{
+		ObjectMapper mapper = new ObjectMapper();
+		vraMap = mapper.readValue(new java.io.File(GA_VOYAGER_MAP), HashMap.class);
 	}
 
 	/*
