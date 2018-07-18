@@ -10,11 +10,13 @@
  * pudl0052 - Tokaido Road
  * pudl0084 - A Trip to Tow
  * pudl0089 - Cruikshank Collection
+ 
+# Manually Migrated / Fixed after Initial Pass (collections above)
 
+ * pudl0030 - Chinese Block Prints: From Gest, no Voyager Records
 
 # Fail
 
- * pudl0030 - Chinese Block Prints: From Gest, no Voyager Records
  * pudl0031 - Jackson Prints: Problems due to merged VRA records that are
               separate in Voyager, e.g. 2007.2195-97, 2007.2198-99,
               2007.02211-12 and more. Propose merging Voyager records to match.
